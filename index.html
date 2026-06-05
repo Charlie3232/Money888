@@ -146,9 +146,13 @@ select.inp{appearance:none}
 .btn-danger{background:none;color:var(--red);border:1.5px solid var(--red);margin-top:10px}
 
 /* keypad */
-.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.kp button{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:var(--ink)}
-.amtdisplay{font-size:38px;font-family:'Outfit';font-weight:700;text-align:right;padding:10px 4px;color:var(--ink)}
+.txnbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 18px 14px;scrollbar-width:none}
+.txnbody::-webkit-scrollbar{display:none}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 18px max(18px,env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);flex-shrink:0}
+.kp button{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px;font-size:21px;font-weight:700;font-family:'Outfit';cursor:pointer;color:var(--ink)}
+.amtdisplay{font-size:42px;font-family:'Outfit';font-weight:700;text-align:right;padding:6px 4px 14px;color:var(--coral)}
+.picker{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.85);border:1.5px solid rgba(58,44,42,.15);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:700;cursor:pointer}
+.picker .ar{color:#b0a09a;font-size:18px}
 
 /* loading / toast */
 .loading{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:99}
@@ -216,7 +220,7 @@ select.inp{appearance:none}
 </div>
 
 <script>
-const API_URL = 'https://script.google.com/macros/s/AKfycbxJN1fK50KdanVTpAnP06Ym1oTS8H73gXwtmBNz5vhJNpR4or9pbei86mb3EXQH11_img/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzishhFaJF9zQHkxt35VEZ9fahfDkOxa6TX2EcYuk0iaKzqyRzIaMyo9cPdNWCa9ET8Fg/exec';
 
 let DB = null;             // 全部資料
 let curPage = 'home';
@@ -225,6 +229,12 @@ let calYear, calMonth;     // 月曆顯示年月
 
 // ---------- 工具 ----------
 function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dkey(v){ // 把任何日期字串正規化成 yyyy-MM-dd
+  let s=String(v||'').trim();
+  let m=s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if(m) return m[1]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[3]).slice(-2);
+  return s.slice(0,10);
+}
 function fmt(n){ n=Number(n)||0; return n.toLocaleString('en-US',{maximumFractionDigits:0}); }
 function fmtSign(n){ n=Number(n)||0; return (n>=0?'+':'')+fmt(n); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
@@ -284,12 +294,12 @@ function totals(){
 }
 function monthTotals(ym){ // ym='2026-06'
   let inc=0,exp=0;
-  DB.transactions.forEach(t=>{ if(String(t.date).slice(0,7)===ym){ if(t.type==='income')inc+=Number(t.amount)||0; else if(t.type==='expense')exp+=Number(t.amount)||0; } });
+  DB.transactions.forEach(t=>{ if(dkey(t.date).slice(0,7)===ym){ if(t.type==='income')inc+=Number(t.amount)||0; else if(t.type==='expense')exp+=Number(t.amount)||0; } });
   return {inc,exp,net:inc-exp};
 }
 function dayTotals(d){
   let inc=0,exp=0;
-  DB.transactions.forEach(t=>{ if(String(t.date)===d){ if(t.type==='income')inc+=Number(t.amount)||0; else if(t.type==='expense')exp+=Number(t.amount)||0; } });
+  DB.transactions.forEach(t=>{ if(dkey(t.date)===d){ if(t.type==='income')inc+=Number(t.amount)||0; else if(t.type==='expense')exp+=Number(t.amount)||0; } });
   return {inc,exp,net:inc-exp};
 }
 function catMap(){ const m={}; DB.categories.forEach(c=>m[c.category_id]=c); return m; }
@@ -357,7 +367,7 @@ function renderBook(){
   const first=new Date(calYear,calMonth,1); const startW=first.getDay();
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const prevDays=new Date(calYear,calMonth,0).getDate();
-  const recDates={}; DB.transactions.forEach(t=>{ recDates[String(t.date)]=true; });
+  const recDates={}; DB.transactions.forEach(t=>{ recDates[dkey(t.date)]=true; });
   let cells='';
   for(let i=0;i<42;i++){
     let dd,cls='d',ymd;
@@ -369,7 +379,7 @@ function renderBook(){
     if(i>=startW+daysInMonth && (i-startW-daysInMonth+1)>=7 && i%7===6) {} // 不提早結束，固定 6 列
   }
   // 當日記錄
-  const recs=DB.transactions.filter(t=>String(t.date)===bookDate).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
+  const recs=DB.transactions.filter(t=>dkey(t.date)===bookDate).sort((a,b)=>String(b.created_at).localeCompare(String(a.created_at)));
   let recHtml=recs.map(t=>{
     const c=cm[t.category_id]||{}; const isInc=t.type==='income';
     return `<div class="lrow" onclick="openEditTxn('${t.txn_id}')"><div class="ico">${c.icon||(isInc?'💰':'💸')}</div>
@@ -493,58 +503,64 @@ function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeMo
 let txnDraft;
 function openAddTxn(){
   const dt = (curPage==='book') ? bookDate : todayStr();
-  txnDraft={type:'expense',amount:'0',category_id:'',account_id:DB.accounts[0]?.account_id||'',date:dt,note:''};
+  txnDraft={type:'expense',amount:'0',category_id:'',account_id:DB.accounts[0]?.account_id||'',date:dt,note:'',member_id:''};
   renderTxnModal('新增記帳');
 }
 function openEditTxn(id){
   const t=DB.transactions.find(x=>String(x.txn_id)===String(id)); if(!t)return;
-  txnDraft={txn_id:t.txn_id,type:t.type,amount:String(t.amount),category_id:t.category_id,account_id:t.account_id,date:t.date,note:t.note||''};
+  txnDraft={txn_id:t.txn_id,type:t.type,amount:String(t.amount),category_id:t.category_id,account_id:t.account_id,date:dkey(t.date),note:t.note||'',member_id:t.member_id||''};
   renderTxnModal('編輯記帳',true);
 }
 function renderTxnModal(title,edit){
-  const cats=DB.categories.filter(c=>c.type===txnDraft.type&&String(c.archived)!=='true');
-  const catChips=cats.map(c=>`<div class="cbox" onclick="selCat('${c.category_id}')" style="${txnDraft.category_id===c.category_id?'border:1.5px solid var(--coral);background:#fbeae4':''}"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('');
+  const cm=catMap();
+  const selCatObj=cm[txnDraft.category_id];
   const accs=DB.accounts.filter(a=>String(a.archived)!=='true').map(a=>`<option value="${a.account_id}" ${txnDraft.account_id===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
+  const members=(DB.members||[]).filter(x=>String(x.archived)!=='true');
+  const memOpts=`<option value="">（不指定）</option>`+members.map(mm=>`<option value="${mm.member_id}" ${txnDraft.member_id===mm.member_id?'selected':''}>${mm.icon||'👤'} ${esc(mm.name)}</option>`).join('');
   const m=openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveTxn(${edit?true:false})">儲存</button></div>
-    <div class="mscroll">
+    <div class="txnbody">
       <div class="seg2" style="margin-bottom:14px" id="txnSeg">
         <button class="${txnDraft.type==='expense'?'on':''}" onclick="setTxnType('expense')">支出</button>
         <button class="${txnDraft.type==='income'?'on':''}" onclick="setTxnType('income')">收入</button>
         <button class="${txnDraft.type==='transfer'?'on':''}" onclick="setTxnType('transfer')">轉帳</button>
       </div>
       <div class="amtdisplay" id="amtDisp">${fmt(txnDraft.amount)}</div>
-      <div class="kp">
-        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="kp('${n}')">${n}</button>`).join('')}
-        <button onclick="kp('c')">C</button><button onclick="kp('0')">0</button><button onclick="kp('b')">⌫</button>
-      </div>
-      <div class="field" style="margin-top:16px" id="txnCatField"><label>分類</label><div class="cgrid">${catChips||'<div class="empty">先到設定新增分類</div>'}</div></div>
+      <div class="field" id="txnCatField" style="${txnDraft.type==='transfer'?'display:none':''}"><label>分類</label>
+        <div class="picker" onclick="openCatPicker()"><span id="catPickTxt">${selCatObj?(selCatObj.icon+' '+esc(selCatObj.name)):'點此選擇分類'}</span><span class="ar">›</span></div></div>
       <div class="field"><label id="txnAccLabel">${txnDraft.type==='transfer'?'轉出帳戶':'帳戶'}</label><select class="inp" id="txnAcc" onchange="txnDraft.account_id=this.value">${accs}</select></div>
       <div class="field" id="txnToAccField" style="${txnDraft.type==='transfer'?'':'display:none'}"><label>轉入帳戶</label><select class="inp" id="txnToAcc" onchange="txnDraft.to_account_id=this.value">${accs}</select></div>
-      <div class="field"><label>日期</label><input class="inp" type="date" id="txnDate" value="${txnDraft.date}" onchange="txnDraft.date=this.value"></div>
+      ${members.length?`<div class="field" id="txnMemField" style="${txnDraft.type==='transfer'?'display:none':''}"><label>成員（歸屬於誰）</label><select class="inp" id="txnMem" onchange="txnDraft.member_id=this.value">${memOpts}</select></div>`:''}
+      <div class="field"><label>日期</label><input class="inp" type="date" id="txnDate" value="${dkey(txnDraft.date)}" onchange="txnDraft.date=this.value"></div>
       <div class="field"><label>備註</label><input class="inp" id="txnNote" value="${esc(txnDraft.note)}" placeholder="選填" oninput="txnDraft.note=this.value"></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delTxn('${txnDraft.txn_id}')">刪除這筆</button>`:''}
+    </div>
+    <div class="kp" id="txnKp">
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="kp('${n}')">${n}</button>`).join('')}
+      <button onclick="kp('c')">C</button><button onclick="kp('0')">0</button><button onclick="kp('b')">⌫</button>
     </div>`);
   document.getElementById('topBack').style.display='flex';
 }
 function setTxnType(t){
   txnDraft.type=t; txnDraft.category_id='';
-  // 分頁鈕狀態
   const seg=document.getElementById('txnSeg');
   seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.textContent===(t==='expense'?'支出':t==='income'?'收入':'轉帳')));
-  // 分類區（轉帳不需分類）
-  const catField=document.getElementById('txnCatField');
-  if(t==='transfer'){ catField.style.display='none'; }
-  else {
-    catField.style.display='block';
-    const cats=DB.categories.filter(c=>c.type===t&&String(c.archived)!=='true');
-    catField.querySelector('.cgrid').innerHTML=cats.map(c=>`<div class="cbox" onclick="selCat('${c.category_id}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('')||'<div class="empty">先到設定新增分類</div>';
-  }
-  // 帳戶標籤 + 轉入帳戶顯示
+  const catField=document.getElementById('txnCatField'); if(catField) catField.style.display=(t==='transfer')?'none':'block';
+  const cp=document.getElementById('catPickTxt'); if(cp) cp.textContent='點此選擇分類';
+  const memF=document.getElementById('txnMemField'); if(memF) memF.style.display=(t==='transfer')?'none':'block';
   document.getElementById('txnAccLabel').textContent=(t==='transfer')?'轉出帳戶':'帳戶';
   document.getElementById('txnToAccField').style.display=(t==='transfer')?'block':'none';
 }
-function selCat(id){ txnDraft.category_id=id; document.querySelectorAll('.cgrid .cbox').forEach(b=>b.style.cssText=''); event.currentTarget.style.cssText='border:1.5px solid var(--coral);background:#fbeae4'; }
+// 分類選擇頁（全頁）
+function openCatPicker(){
+  const cats=DB.categories.filter(c=>c.type===txnDraft.type&&String(c.archived)!=='true').sort((a,b)=>(a.sort||0)-(b.sort||0));
+  const grid=cats.map(c=>`<div class="cbox" onclick="pickCat('${c.category_id}','${c.icon}','${esc(c.name)}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('')||'<div class="empty">先到設定新增分類</div>';
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeTopModal()">‹ 返回</button><div class="t">選擇分類</div><span style="width:40px"></span></div>
+    <div class="mscroll"><div class="cgrid">${grid}</div></div>`);
+}
+function pickCat(id,icon,name){ txnDraft.category_id=id; const el=document.getElementById('catPickTxt'); if(el) el.textContent=icon+' '+name; closeTopModal(); }
+function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
 function kp(k){ let a=txnDraft.amount; if(k==='c')a='0'; else if(k==='b')a=a.length>1?a.slice(0,-1):'0'; else { a=(a==='0')?k:a+k; } txnDraft.amount=a; document.getElementById('amtDisp').textContent=fmt(a); }
 async function saveTxn(edit){
   if(!txnDraft.amount||Number(txnDraft.amount)<=0){ toast('請輸入金額'); return; }
@@ -553,7 +569,7 @@ async function saveTxn(edit){
     if(!txnDraft.to_account_id) txnDraft.to_account_id=document.getElementById('txnToAcc')?.value||'';
     if(txnDraft.account_id===txnDraft.to_account_id){ toast('轉出轉入不能同一帳戶'); return; }
   }
-  const payload={type:txnDraft.type,amount:Number(txnDraft.amount),category_id:txnDraft.category_id,account_id:txnDraft.account_id,to_account_id:txnDraft.to_account_id||'',date:txnDraft.date,note:txnDraft.note};
+  const payload={type:txnDraft.type,amount:Number(txnDraft.amount),category_id:txnDraft.category_id,account_id:txnDraft.account_id,to_account_id:txnDraft.to_account_id||'',date:txnDraft.date,note:txnDraft.note,member_id:txnDraft.member_id||''};
   toast('儲存中…');
   let res;
   if(edit){ payload.txn_id=txnDraft.txn_id; res=await apiPost('updateTxn',{payload}); }
@@ -573,15 +589,23 @@ function renderAccModal(title,edit){
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveAcc(${edit?true:false})">儲存</button></div>
     <div class="mscroll">
       <div class="field"><label>名稱</label><input class="inp" id="aName" value="${esc(accDraft.name)}" placeholder="例如：玉山銀行"></div>
-      <div class="field"><label>帳戶性質</label><select class="inp" id="aType" onchange="accDraft.type=this.value">${opts}</select>
-        <div style="font-size:11px;color:var(--sub);margin-top:6px">現金/銀行→總存款；證券戶/理財→投資；信用卡/借入→負債</div></div>
-      <div class="field"><label>${(accDraft.type==='credit'||accDraft.type==='borrow')?'目前欠款（正數）':'目前餘額'}</label><input class="inp" id="aBal" type="number" value="${accDraft.balance}"></div>
+      <div class="field"><label>帳戶性質</label><select class="inp" id="aType" onchange="accTypeChange(this.value)">${opts}</select>
+        <div style="font-size:11px;color:var(--sub);margin-top:6px">現金/銀行→總存款；證券戶/理財→投資；信用卡/借入→負債（預設不計入資產）</div></div>
+      <div class="field"><label id="aBalLabel">${(accDraft.type==='credit'||accDraft.type==='borrow')?'目前欠款（正數）':'目前餘額'}</label><input class="inp" id="aBal" type="number" value="${accDraft.balance}"></div>
       <div class="field"><label>圖示</label><div class="emojigrid" id="aEmo">${['🏦','💵','💳','🪙','💰','🏧','📈','🧺','💴','💶','🤝','📒'].map(e=>`<span class="${accDraft.icon===e?'sel':''}" onclick="accDraft.icon='${e}';document.querySelectorAll('#aEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
       <div class="field"><label>計入設定</label>
-        <div class="seg2"><button class="${!accDraft.exclude?'on':''}" onclick="accDraft.exclude=false;this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">計入總資產</button><button class="${accDraft.exclude?'on':''}" onclick="accDraft.exclude=true;this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">不計入</button></div></div>
+        <div class="seg2" id="aExcSeg"><button class="${!accDraft.exclude?'on':''}" onclick="accDraft.exclude=false;document.querySelectorAll('#aExcSeg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">計入總資產</button><button class="${accDraft.exclude?'on':''}" onclick="accDraft.exclude=true;document.querySelectorAll('#aExcSeg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">不計入</button></div></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delAcc('${accDraft.account_id}')">刪除帳戶</button>`:''}
     </div>`);
   document.getElementById('topBack').style.display='flex';
+}
+function accTypeChange(t){
+  accDraft.type=t;
+  const isDebt=(t==='credit'||t==='borrow');
+  // 信用卡/借入 預設不計入資產
+  accDraft.exclude=isDebt;
+  document.querySelectorAll('#aExcSeg button').forEach((b,i)=>b.classList.toggle('on', i===(accDraft.exclude?1:0)));
+  const lbl=document.getElementById('aBalLabel'); if(lbl) lbl.textContent=isDebt?'目前欠款（正數）':'目前餘額';
 }
 async function saveAcc(edit){
   accDraft.name=document.getElementById('aName').value.trim();
@@ -639,6 +663,7 @@ function openSettings(){
       <div class="setrow" onclick="openLoans()"><span class="e">💳</span>貸款管理<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('帳戶請到存款頁右上新增')"><span class="e">🏦</span>帳戶管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openRecurrings()"><span class="e">🔁</span>週期支出 / 轉帳<span class="ar">›</span></div>
+      <div class="setrow" onclick="openMembers()"><span class="e">👥</span>成員管理<span class="ar">›</span></div>
       <div class="setrow" onclick="doRefresh()"><span class="e">☁️</span>立即同步抓價<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('我的資產 v1.0')"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
     </div>`);
@@ -785,6 +810,39 @@ async function saveRec(edit){
   if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已儲存'); }
 }
 async function delRec(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteRecurring',{id}); if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已刪除'); } }
+
+// ========== 成員管理 ==========
+function openMembers(){
+  const list=(DB.members||[]).filter(m=>String(m.archived)!=='true').map(m=>`<div class="lrow" onclick="openEditMember('${m.member_id}')"><div class="ico">${m.icon||'👤'}</div><div class="nm">${esc(m.name)}</div><span class="ar" style="color:#b0a09a">✎</span></div>`).join('')||'<div class="empty">尚無成員</div>';
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">成員管理</div><button class="save" onclick="openAddMember()">＋</button></div>
+    <div class="mscroll"><div class="card">${list}</div>
+      <div style="font-size:12px;color:var(--sub);text-align:center;line-height:1.8">記帳時可指定花費歸屬於哪位成員</div></div>`);
+  document.getElementById('topBack').style.display='flex';
+}
+let memDraft;
+const MEMBER_EMOJIS=['👤','👨','👩','🧑','👦','👧','👴','👵','🧒','👶','🐶','🐱','💑','👨‍👩‍👧','🙋','🧔'];
+function openAddMember(){ memDraft={name:'',icon:'👤'}; renderMemEdit('新增成員'); }
+function openEditMember(id){ const m=(DB.members||[]).find(x=>String(x.member_id)===String(id)); if(!m)return; memDraft={member_id:m.member_id,name:m.name,icon:m.icon||'👤'}; renderMemEdit('編輯成員',true); }
+function renderMemEdit(title,edit){
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveMem(${edit?true:false})">儲存</button></div>
+    <div class="mscroll">
+      <div class="field"><label>名稱</label><input class="inp" id="memName" value="${esc(memDraft.name)}" placeholder="例如：老婆、小孩、自己"></div>
+      <div class="field"><label>圖示</label><div class="emojigrid" id="memEmo">${MEMBER_EMOJIS.map(e=>`<span class="${memDraft.icon===e?'sel':''}" onclick="memDraft.icon='${e}';document.querySelectorAll('#memEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
+      ${edit?`<button class="bigbtn btn-danger" onclick="delMem('${memDraft.member_id}')">刪除</button>`:''}
+    </div>`);
+  document.getElementById('topBack').style.display='flex';
+}
+async function saveMem(edit){
+  memDraft.name=document.getElementById('memName').value.trim();
+  if(!memDraft.name){ toast('請輸入名稱'); return; }
+  let res;
+  if(edit){ res=await apiPost('updateMember',{payload:{member_id:memDraft.member_id,name:memDraft.name,icon:memDraft.icon,archived:false}}); }
+  else res=await apiPost('addMember',{payload:{name:memDraft.name,icon:memDraft.icon,archived:false}});
+  if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已儲存'); }
+}
+async function delMem(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteMember',{id}); if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已刪除'); } }
 
 // ---------- 啟動 ----------
 const splashStart = Date.now();
