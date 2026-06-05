@@ -196,10 +196,10 @@ select.inp{appearance:none}
 
   <!-- 頂列 -->
   <div class="topbar">
-    <div class="back" id="topBack" style="display:none" onclick="closeAllModal()"><svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M15 18l-6-6 6-6"/></svg></div>
     <div class="title" id="topTitle">主頁</div>
     <div style="display:flex;gap:8px;align-items:center">
       <div class="addchip" id="topAdd" style="display:none" onclick="onTopAdd()"><svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M12 5v14M5 12h14"/></svg>新增</div>
+      <div class="gear" onclick="openStats()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
       <div class="gear" onclick="openSettings()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1l-.4-2.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg></div>
     </div>
   </div>
@@ -513,7 +513,7 @@ function openModal(html){
   return div;
 }
 function closeModal(el){ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }
-function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeModal(m)); document.getElementById('topBack').style.display='none'; }
+function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeModal(m)); }
 
 // ========== 記帳表單 ==========
 let txnDraft;
@@ -558,7 +558,6 @@ function renderTxnModal(title,edit){
       ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="kp('${n}')">${n}</button>`).join('')}
       <button onclick="kp('c')">C</button><button onclick="kp('0')">0</button><button onclick="kp('b')">⌫</button>
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 function dispDate(d){ const x=new Date(dkey(d)); if(isNaN(x))return dkey(d); const wd='日一二三四五六'[x.getDay()]; return `${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日 週${wd}`; }
 function accName(id){ const a=accMap()[id]; return a?(a.icon?a.icon+' ':'')+esc(a.name):'選擇'; }
@@ -620,7 +619,6 @@ function renderAccModal(title,edit){
         <div class="seg2" id="aExcSeg"><button class="${!accDraft.exclude?'on':''}" onclick="accDraft.exclude=false;document.querySelectorAll('#aExcSeg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">計入總資產</button><button class="${accDraft.exclude?'on':''}" onclick="accDraft.exclude=true;document.querySelectorAll('#aExcSeg button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">不計入</button></div></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delAcc('${accDraft.account_id}')">刪除帳戶</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 function accTypeChange(t){
   accDraft.type=t;
@@ -664,7 +662,6 @@ function renderHoldModal(title,edit){
       <div class="field"><label>帳戶</label><select class="inp" id="hAcc">${accs}</select></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delHold('${holdDraft.holding_id}')">刪除</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 function setHoldType(t,btn){ holdDraft.type=t; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); document.getElementById('hUidField').style.display=(t==='fund')?'block':'none'; }
 async function saveHold(edit){
@@ -687,10 +684,9 @@ function openSettings(){
       <div class="setrow" onclick="toast('帳戶請到存款頁右上新增')"><span class="e">🏦</span>帳戶管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openRecurrings()"><span class="e">🔁</span>週期支出 / 轉帳<span class="ar">›</span></div>
       <div class="setrow" onclick="openMembers()"><span class="e">👥</span>成員管理<span class="ar">›</span></div>
-      <div class="setrow" onclick="doRefresh()"><span class="e">☁️</span>立即同步抓價<span class="ar">›</span></div>
+      <div class="setrow" onclick="openTutorial()"><span class="e">📖</span>使用教學<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('我的資產 v1.0')"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 
 // 分類管理
@@ -704,7 +700,6 @@ function renderCatModal(){
       <div class="seg2" style="width:auto"><button class="${catTab==='expense'?'on':''}" style="padding:8px 18px" onclick="switchCatTab('expense')">支出</button><button class="${catTab==='income'?'on':''}" style="padding:8px 18px" onclick="switchCatTab('income')">收入</button></div>
       <span style="width:30px"></span></div>
     <div class="mscroll"><div class="cgrid">${grid}<div class="cbox add" onclick="openAddCat()"><div class="e">＋</div><div class="t">新增類別</div></div></div></div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 function switchCatTab(t){ catTab=t; closeModal(document.querySelectorAll('.modal')[document.querySelectorAll('.modal').length-1]); renderCatModal(); }
 
@@ -721,7 +716,6 @@ function renderCatEdit(title,edit){
       <div class="field"><label>選擇圖示</label><div class="emojigrid" id="catEmo">${emo}</div></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delCat('${catDraft.category_id}')">刪除</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 async function saveCat(edit){
   catDraft.name=document.getElementById('cName').value.trim();
@@ -741,7 +735,6 @@ function openLoans(){
   const m=openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">貸款管理</div><button class="save" onclick="openAddLoan()">＋</button></div>
     <div class="mscroll"><div class="card">${loans}</div></div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 let loanDraft;
 function openAddLoan(){ loanDraft={name:'',principal:'0',rate:'2',term_months:'240',start_date:todayStr(),account_id:DB.accounts[0]?.account_id||''}; renderLoanEdit('新增貸款'); }
@@ -757,7 +750,6 @@ function renderLoanEdit(title,edit){
       <div class="field"><label>起始日</label><input class="inp" id="lD" type="date" value="${loanDraft.start_date}"></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delLoan('${loanDraft.loan_id}')">刪除</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 async function saveLoan(edit){
   const p={name:document.getElementById('lName').value.trim(),principal:Number(document.getElementById('lP').value)||0,rate:Number(document.getElementById('lR').value)||0,term_months:Number(document.getElementById('lN').value)||0,start_date:document.getElementById('lD').value,extra_payment:0,active:true};
@@ -786,7 +778,6 @@ function openRecurrings(){
     <div class="mscroll"><div class="card">${list}</div>
       <div style="font-size:12px;color:var(--sub);text-align:center;line-height:1.8">每日 00:15 自動執行到期項目<br>支援每月/每週/每年；轉帳會自動在兩帳戶間移動</div>
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 let recDraft;
 function openAddRecurring(){ recDraft={name:'',type:'expense',account_id:DB.accounts[0]?.account_id||'',to_account_id:'',category_id:'',amount:'0',frequency:'monthly',next_date:todayStr(),active:true}; renderRecEdit('新增週期'); }
@@ -812,7 +803,6 @@ function renderRecEdit(title,edit){
       <div class="field"><label>下次執行日</label><input class="inp" id="rNext" type="date" value="${recDraft.next_date}"></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delRec('${recDraft.recur_id}')">刪除</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 function recSetType(t){ recDraft.type=t;
   // 同步當前輸入值
@@ -841,7 +831,6 @@ function openMembers(){
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">成員管理</div><button class="save" onclick="openAddMember()">＋</button></div>
     <div class="mscroll"><div class="card">${list}</div>
       <div style="font-size:12px;color:var(--sub);text-align:center;line-height:1.8">記帳時可指定花費歸屬於哪位成員</div></div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 let memDraft;
 const MEMBER_EMOJIS=['👤','👨','👩','🧑','👦','👧','👴','👵','🧒','👶','🐶','🐱','💑','👨‍👩‍👧','🙋','🧔'];
@@ -855,7 +844,6 @@ function renderMemEdit(title,edit){
       <div class="field"><label>圖示</label><div class="emojigrid" id="memEmo">${MEMBER_EMOJIS.map(e=>`<span class="${memDraft.icon===e?'sel':''}" onclick="memDraft.icon='${e}';document.querySelectorAll('#memEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delMem('${memDraft.member_id}')">刪除</button>`:''}
     </div>`);
-  document.getElementById('topBack').style.display='flex';
 }
 async function saveMem(edit){
   memDraft.name=document.getElementById('memName').value.trim();
@@ -866,6 +854,136 @@ async function saveMem(edit){
   if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已儲存'); }
 }
 async function delMem(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteMember',{id}); if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已刪除'); } }
+
+// ========== 統計分析 ==========
+const STAT_COLORS=['#c06b54','#d27a62','#e29a82','#6f8a6a','#8aa3c4','#b59ad0','#d4a843','#a8857a','#7ab0a0','#cf9088','#9aab84','#c4a3b0'];
+let statYear, statMonth, statTab='expense', statSub='category';
+function openStats(){
+  const d=new Date(); if(statYear==null){ statYear=d.getFullYear(); statMonth=d.getMonth()+1; }
+  openModal(`<div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">統計分析</div><span style="width:30px"></span></div>
+    <div class="mscroll" id="statBody"></div>`);
+  renderStats();
+}
+function statYM(){ return statYear+'-'+String(statMonth).padStart(2,'0'); }
+function statNav(dir){ statMonth+=dir; if(statMonth<1){statMonth=12;statYear--;} if(statMonth>12){statMonth=1;statYear++;} renderStats(); }
+function setStatTab(t){ statTab=t; if(t!=='trend'&&statSub==='trend')statSub='category'; renderStats(); }
+function setStatSub(s){ statSub=s; renderStats(); }
+
+function renderStats(){
+  const body=document.getElementById('statBody'); if(!body)return;
+  const cm=catMap(), am=accMap();
+  const ym=statYM();
+  // 篩出當月該類型交易
+  const txns=DB.transactions.filter(t=>dkey(t.date).slice(0,7)===ym && t.type===(statTab==='trend'?'expense':statTab));
+
+  let inner='';
+  // 年月選擇器
+  inner+=`<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+    <button class="kpbtn" onclick="statNav(-1)" style="border:none;background:rgba(58,44,42,.07);width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;color:var(--ink)">‹</button>
+    <b style="font-size:17px">${statYear} 年 ${statMonth} 月</b>
+    <button class="kpbtn" onclick="statNav(1)" style="border:none;background:rgba(58,44,42,.07);width:34px;height:34px;border-radius:10px;font-size:16px;cursor:pointer;color:var(--ink)">›</button></div>`;
+
+  // 大分頁：支出/收入/趨勢
+  inner+=`<div class="segtab">
+    <button class="${statTab==='expense'?'on':''}" onclick="setStatTab('expense')">支出</button>
+    <button class="${statTab==='income'?'on':''}" onclick="setStatTab('income')">收入</button>
+    <button class="${statTab==='trend'?'on':''}" onclick="setStatTab('trend')">趨勢</button></div>`;
+
+  if(statTab==='trend'){
+    inner+=renderTrend();
+  } else {
+    // 小分頁：類別/帳戶/成員
+    inner+=`<div class="segtab" style="background:rgba(58,44,42,.04)">
+      <button class="${statSub==='category'?'on':''}" onclick="setStatSub('category')">類別比</button>
+      <button class="${statSub==='account'?'on':''}" onclick="setStatSub('account')">帳戶比</button>
+      <button class="${statSub==='member'?'on':''}" onclick="setStatSub('member')">成員比</button></div>`;
+    // 依小分頁分組
+    let groups={};
+    txns.forEach(t=>{
+      let key,label,icon;
+      if(statSub==='category'){ const c=cm[t.category_id]||{}; key=t.category_id||'none'; label=c.name||'未分類'; icon=c.icon||'❓'; }
+      else if(statSub==='account'){ const a=am[t.account_id]||{}; key=t.account_id||'none'; label=a.name||'未知'; icon=a.icon||'🏦'; }
+      else { const mid=t.member_id||'none'; const mm=(DB.members||[]).find(x=>String(x.member_id)===String(mid)); key=mid; label=mm?mm.name:'未指定'; icon=mm?(mm.icon||'👤'):'👤'; }
+      if(!groups[key]) groups[key]={label,icon,amt:0};
+      groups[key].amt+=Number(t.amount)||0;
+    });
+    const arr=Object.values(groups).sort((a,b)=>b.amt-a.amt);
+    const total=arr.reduce((s,g)=>s+g.amt,0);
+    inner+=`<div class="card">${donutChart(arr,total)}${arr.length?arr.map((g,i)=>{
+      const pct=total>0?(g.amt/total*100):0;
+      return `<div class="lrow"><div class="ico">${g.icon}</div><div class="nm">${esc(g.label)}<small>${pct.toFixed(1)}%</small></div><div class="amt ${statTab==='income'?'green':'red'}">${fmt(g.amt)}</div></div>`;
+    }).join(''):'<div class="empty">本月無資料</div>'}</div>`;
+  }
+  body.innerHTML=inner;
+}
+
+function donutChart(arr,total){
+  if(!total) return '<div class="empty">本月無資料</div>';
+  let off=0, segs='';
+  arr.forEach((g,i)=>{ const pct=g.amt/total; const dash=pct*314; segs+=`<circle cx="60" cy="60" r="50" fill="none" stroke="${STAT_COLORS[i%STAT_COLORS.length]}" stroke-width="18" stroke-dasharray="${dash} ${314-dash}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`; off+=dash; });
+  return `<div style="text-align:center;padding:6px 0 14px"><svg viewBox="0 0 120 120" style="width:160px;height:160px">${segs}<circle cx="60" cy="60" r="40" fill="var(--bg)"/><text x="60" y="56" text-anchor="middle" font-size="9" fill="var(--sub)">總計</text><text x="60" y="72" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)" font-family="Outfit">${fmt(total)}</text></svg></div>`;
+}
+
+function renderTrend(){
+  // 最近 6 個月收支長條
+  const months=[];
+  let y=statYear, mo=statMonth;
+  for(let i=5;i>=0;i--){ let yy=y, mm=mo-i; while(mm<1){mm+=12;yy--;} months.push(yy+'-'+String(mm).padStart(2,'0')); }
+  const data=months.map(ym=>{ const mt=monthTotals(ym); return {ym,inc:mt.inc,exp:mt.exp}; });
+  const max=Math.max(1,...data.map(d=>Math.max(d.inc,d.exp)));
+  const bars=data.map(d=>{
+    const ih=d.inc/max*100, eh=d.exp/max*100;
+    const mlabel=d.ym.slice(5)+'月';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div style="flex:1;display:flex;align-items:flex-end;gap:3px;height:130px">
+        <div style="width:11px;background:linear-gradient(180deg,#7ea389,#6f8a6a);border-radius:4px 4px 0 0;height:${ih}%" title="收入 ${fmt(d.inc)}"></div>
+        <div style="width:11px;background:linear-gradient(180deg,#d4897a,#c06b54);border-radius:4px 4px 0 0;height:${eh}%" title="支出 ${fmt(d.exp)}"></div>
+      </div>
+      <div style="font-size:10px;color:var(--sub);font-weight:700">${mlabel}</div></div>`;
+  }).join('');
+  return `<div class="card"><h3>近 6 個月收支趨勢</h3>
+    <div style="display:flex;gap:6px;align-items:flex-end;padding:8px 0">${bars}</div>
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;font-weight:700">
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6f8a6a;margin-right:4px"></span>收入</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c06b54;margin-right:4px"></span>支出</span></div></div>
+    <div class="card"><h3>每月明細</h3>${data.slice().reverse().map(d=>`<div class="lrow"><div class="nm">${d.ym}<small>結餘 ${fmtSign(d.inc-d.exp)}</small></div><div style="text-align:right"><div class="amt green" style="font-size:13px">+${fmt(d.inc)}</div><div class="amt red" style="font-size:13px">−${fmt(d.exp)}</div></div></div>`).join('')}</div>`;
+}
+
+// ========== 使用教學（翻頁） ==========
+let tutPage=0;
+const TUT=[
+  {icon:'🏠',title:'主頁・總覽',body:'最上面是你的<b>淨資產</b>，下方趨勢線會隨每日累積。<br><br>「資產總覽」5 格分別是總資產、總存款、股票、ETF、基金，<b>點任一格</b>可直接跳到對應頁面。<br><br>再往下是貸款餘額與本月收支摘要。'},
+  {icon:'➕',title:'記一筆',body:'點底部中央的<b>＋</b>按鈕記帳。<br><br>上方切換<b>支出／收入／轉帳</b>，用下方鍵盤輸入金額，選類別、帳戶、成員、日期。<br><br>在記帳本選好日期再按＋，日期會自動帶入那天。'},
+  {icon:'📖',title:'記帳本',body:'上方<b>月曆</b>顯示整個月，有記錄的日子會有小點。<br><br>點任一天，下方就顯示<b>當日明細</b>，可在框內上下滑動。<br><br>當日小結顯示收入綠、支出紅、合計。'},
+  {icon:'🏦',title:'存款・帳戶',body:'分成三區：<b>存款帳戶</b>（現金/銀行）、<b>投資帳戶</b>（證券戶/理財）、<b>負債</b>（信用卡/借入）。<br><br>右上「新增」可加帳戶，選性質決定它歸哪一區。'},
+  {icon:'📈',title:'投資・持倉',body:'股票/ETF 每日收盤後自動抓價，按<b>↻ 更新現價</b>可立即抓盤中價。<br><br>基金請每月自行更新淨值。<br><br>新增持倉時會<b>自動從選定帳戶扣除成本</b>，所以記得先把資金轉到證券戶。'},
+  {icon:'💳',title:'貸款・試算',body:'在設定→貸款管理新增貸款，填本金、年利率、期數、起始日。<br><br>系統自動算出<b>每月應繳、已繳期數、剩餘本金</b>，並顯示在主頁。'},
+  {icon:'🔁',title:'週期支出／轉帳',body:'設定→週期支出，建立每月固定支出（如房租）或<b>定期定額</b>。<br><br>支援每月/每週/每年，到期會在每天 00:15 <b>自動記一筆</b>。'},
+  {icon:'👥',title:'成員',body:'設定→成員管理，新增家庭成員。<br><br>記帳時可指定這筆花費<b>歸屬於誰</b>，在統計分析就能看到各成員的花費比例。'},
+  {icon:'📊',title:'統計分析',body:'主頁右上的<b>長條圖</b>圖示進入。<br><br>可看每月<b>支出/收入</b>的類別比、帳戶比、成員比（圓餅圖），以及近 6 個月的<b>收支趨勢</b>。'}
+];
+function openTutorial(){ tutPage=0; renderTut(); }
+function renderTut(){
+  const p=TUT[tutPage];
+  const dots=TUT.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===tutPage?'var(--coral)':'rgba(58,44,42,.2)'}"></span>`).join('');
+  const html=`<div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">使用教學</div><span style="width:30px"></span></div>
+    <div class="mscroll" style="display:flex;flex-direction:column">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px 24px">
+        <div style="font-size:72px;margin-bottom:20px">${p.icon}</div>
+        <div style="font-size:22px;font-weight:700;margin-bottom:16px">${p.title}</div>
+        <div style="font-size:15px;line-height:1.9;color:var(--ink)">${p.body}</div>
+      </div>
+      <div style="display:flex;gap:7px;justify-content:center;padding:16px">${dots}</div>
+      <div style="display:flex;gap:10px;padding:0 24px 20px">
+        ${tutPage>0?`<button class="bigbtn" style="background:rgba(58,44,42,.08);color:var(--ink)" onclick="tutNav(-1)">‹ 上一頁</button>`:''}
+        ${tutPage<TUT.length-1?`<button class="bigbtn" onclick="tutNav(1)">下一頁 ›</button>`:`<button class="bigbtn" onclick="closeAllModal()">開始使用 ✓</button>`}
+      </div>
+    </div>`;
+  const existing=document.querySelector('.modal.tutmodal');
+  if(existing){ existing.innerHTML=html; }
+  else { const m=openModal(html); m.classList.add('tutmodal'); }
+}
+function tutNav(dir){ tutPage+=dir; if(tutPage<0)tutPage=0; if(tutPage>TUT.length-1)tutPage=TUT.length-1; renderTut(); }
 
 // ---------- 啟動 ----------
 const splashStart = Date.now();
