@@ -13,16 +13,17 @@
 <title>查理的記帳APP</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
 @font-face{font-family:'GenSenRound';src:url('https://cdn.jsdelivr.net/gh/max32002/GenSenRounded-webfont@1.0/webfont/GenSenRounded-TC/GenSenRoundedTC-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
 @font-face{font-family:'GenSenRound';src:url('https://cdn.jsdelivr.net/gh/max32002/GenSenRounded-webfont@1.0/webfont/GenSenRounded-TC/GenSenRoundedTC-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
 :root{
-  --bg:#eef0ea; --ink:#22281e; --sub:#7e8472; --line:rgba(34,40,30,.08);
-  --coral:#b08a3a; --coral2:#c09a48; --coral3:#d4b46a;
+  --bg:#fff7e8; --ink:#2a1a2e; --sub:#9a8478; --line:rgba(42,26,46,.1);
+  --coral:#ff6a3e; --coral2:#ff8c42; --coral3:#ffa55e;
   --green:#5a8a4e; --red:#b0553a;
-  --card:rgba(255,255,255,.7); --cardgrad:linear-gradient(160deg,#f8faf4 0%,#eef1e8 100%);
-  --herograd:linear-gradient(150deg,#2d352a 0%,#1a1f16 60%,#252e1e 100%);
+  --card:#ffffff; --cardgrad:#ffffff;
+  --herograd:linear-gradient(135deg,#ff8c42,#ff5e7e);
+  --inkline:#2a1a2e;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -31,7 +32,7 @@ input,select,textarea{max-width:100%}
 body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:var(--ink);
   display:flex;justify-content:center}
 .num,.amt{font-family:'Outfit',sans-serif}
-#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);background-image:radial-gradient(rgba(255,140,60,.1) 1.5px,transparent 1.5px);background-size:15px 15px;overflow:hidden}
 
 /* 固定頂列 */
 .topbar{flex-shrink:0;padding:max(14px,env(safe-area-inset-top)) 20px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);z-index:5}
@@ -46,21 +47,21 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .scroll::-webkit-scrollbar{display:none}
 
 /* 固定底部 Tab */
-.tabbar{flex-shrink:0;display:flex;justify-content:space-around;align-items:center;padding:10px 8px max(22px,env(safe-area-inset-bottom));background:var(--bg);border-top:1.5px solid var(--ink);position:relative;z-index:6}
+.tabbar{flex-shrink:0;display:flex;justify-content:space-around;align-items:center;padding:10px 8px max(22px,env(safe-area-inset-bottom));background:var(--bg);border-top:2.5px solid var(--ink);position:relative;z-index:6}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;opacity:.34;cursor:pointer;border:none;background:none;color:var(--ink);font-family:inherit}
 .tab.on{opacity:1;color:var(--coral)}
 .tab svg{width:23px;height:23px;stroke:currentColor;fill:none}
-.addbtn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--coral3),var(--coral2));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(210,122,98,.4);margin-top:-20px;cursor:pointer;border:none;position:relative;z-index:7}
+.addbtn{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--coral2),var(--coral));display:flex;align-items:center;justify-content:center;box-shadow:3px 3px 0 var(--inkline);margin-top:-20px;cursor:pointer;border:2.5px solid var(--inkline);position:relative;z-index:7;color:#fff}
 .addbtn svg{width:26px;height:26px;stroke:#fff;fill:none}
 
 /* 卡片 */
-.card{background:var(--cardgrad);box-shadow:0 4px 18px rgba(58,44,42,.06),inset 0 1px 0 #fff;border:1px solid rgba(58,44,42,.05);border-radius:20px;padding:18px;margin-bottom:13px}
+.card{background:var(--card);box-shadow:4px 4px 0 var(--inkline);border:2.5px solid var(--inkline);border-radius:18px;padding:18px;margin-bottom:14px}
 .card h3{font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--sub);margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
 
 /* 淨資產主卡 */
-.hero{background:var(--herograd);color:#f4e9e4;border-radius:26px;padding:24px 22px;margin-bottom:14px;box-shadow:0 14px 34px rgba(58,44,42,.26),inset 0 1px 0 rgba(255,255,255,.07);position:relative;overflow:hidden}
-.hero .label{font-size:13px;font-weight:700;letter-spacing:.5px;color:#9aa085}
-.hero .big{font-size:44px;font-weight:700;letter-spacing:-1px;margin-top:8px;line-height:1.05;color:#e8d09a;font-family:'Outfit'}
+.hero{background:var(--herograd);color:#fff;border:2.5px solid var(--inkline);border-radius:22px;padding:24px 22px;margin-bottom:14px;box-shadow:5px 5px 0 var(--inkline);position:relative;overflow:hidden}
+.hero .label{font-size:13px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.85)}
+.hero .big{font-size:44px;font-weight:700;letter-spacing:-1px;margin-top:8px;line-height:1.05;color:#fff;font-family:'Outfit'}
 .hero .sub{display:flex;gap:12px;margin-top:14px;font-size:12px;font-weight:700}
 .hero .sub span{padding:5px 11px;border-radius:20px}
 .hero .sub .up{background:linear-gradient(135deg,#8fb89a,#6f8a6a);color:#1e2e22}
@@ -78,7 +79,7 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 /* 列表通用 */
 .lrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .lrow:last-child{border:none}
-.lrow .ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,#e8ece0,#dde2d4);box-shadow:inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.lrow .ico{width:42px;height:42px;border-radius:11px;background:#fff7e8;border:2px solid var(--inkline);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .lrow .nm{flex:1;font-weight:700;font-size:15px}
 .lrow .nm small{display:block;font-size:11px;color:var(--sub);font-weight:500;margin-top:1px}
 .lrow .amt{font-weight:700;font-size:16px;font-family:'Outfit'}
@@ -100,6 +101,10 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .cal .d.dot::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--coral2);position:absolute;bottom:5px}
 .cal .d.act.dot::after{background:#fff}
 .summary{display:flex;gap:8px;margin-bottom:11px}
+.summary.compact{gap:6px;margin-bottom:8px}
+.summary.compact .sbox{padding:5px 6px;border-radius:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.summary.compact .sbox .l{font-size:10px}
+.summary.compact .sbox .v{font-size:13px;margin-top:0}
 .sbox{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
 .sbox .l{font-size:11px;color:var(--sub);font-weight:700}
 .sbox .v{font-size:17px;font-family:'Outfit';font-weight:700;margin-top:3px}
@@ -171,9 +176,9 @@ select.inp{appearance:none}
 /* 教學模擬畫面 */
 .mockwrap{display:flex;justify-content:center;padding:8px 22px}
 .mock{width:230px;background:#f6efec;border:6px solid #2e211d;border-radius:26px;padding:12px 10px;display:flex;flex-direction:column;gap:7px;box-shadow:0 10px 30px rgba(58,44,42,.2)}
-.mock .mhero{background:linear-gradient(150deg,#2d352a,#1a1f16);border-radius:14px;padding:12px;color:#e8d09a}
-.mock .ml{font-size:9px;color:#9aa085;font-weight:700}
-.mock .mbig{font-size:20px;font-weight:700;font-family:'Outfit';color:#e8d09a}
+.mock .mhero{background:linear-gradient(150deg,#2d352a,#1a1f16);border-radius:14px;padding:12px;color:#fff}
+.mock .ml{font-size:9px;color:rgba(255,255,255,.85);font-weight:700}
+.mock .mbig{font-size:20px;font-weight:700;font-family:'Outfit';color:#fff}
 .mock .mup{font-size:9px;color:#e8b4a0;margin-top:3px}
 .mock .mcard,.mock .mcardh{font-size:10px}
 .mock .mcardh{font-weight:700;color:var(--sub);margin-top:4px}
@@ -443,7 +448,7 @@ function renderBook(){
         ${cells}
       </div>
     </div>
-    <div class="summary">
+    <div class="summary compact">
       <div class="sbox"><div class="l">收入</div><div class="v green">${fmtSign(ds.inc)}</div></div>
       <div class="sbox"><div class="l">支出</div><div class="v red">${ds.exp?('−'+fmt(ds.exp)):'0'}</div></div>
       <div class="sbox"><div class="l">合計</div><div class="v ${ds.net>=0?'green':'red'}">${fmtSign(ds.net)}</div></div>
@@ -889,7 +894,11 @@ async function saveMem(edit){
 async function delMem(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteMember',{id}); if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已刪除'); } }
 
 // ========== 統計分析 ==========
-const STAT_COLORS=['#c06b54','#d27a62','#e29a82','#6f8a6a','#8aa3c4','#b59ad0','#d4a843','#a8857a','#7ab0a0','#cf9088','#9aab84','#c4a3b0'];
+// 支出：紅粉橘莫蘭迪系
+const STAT_EXP_COLORS=['#c97a6d','#d99a8a','#e0b0a0','#cf8f9c','#d4a5b0','#e2b89a','#c98a6a','#bb6a6a','#dba890','#c4848f','#e0a888','#d09a8a'];
+// 收入：綠藍黃灰莫蘭迪系
+const STAT_INC_COLORS=['#7a9a6e','#8fb89a','#8aa3c4','#9ab0c4','#c4b87a','#d4c88a','#a8b090','#9aab84','#8fb0a8','#b0a884','#90a8b0','#a4b09a'];
+function statColors(){ return statTab==='income'?STAT_INC_COLORS:STAT_EXP_COLORS; }
 let statYear, statMonth, statTab='expense', statSub='category';
 function openStats(){
   const d=new Date(); if(statYear==null){ statYear=d.getFullYear(); statMonth=d.getMonth()+1; }
@@ -942,9 +951,10 @@ function renderStats(){
     });
     const arr=Object.values(groups).sort((a,b)=>b.amt-a.amt);
     const total=arr.reduce((s,g)=>s+g.amt,0);
+    const cols=statColors();
     inner+=`<div class="card">${donutChart(arr,total)}${arr.length?arr.map((g,i)=>{
       const pct=total>0?(g.amt/total*100):0;
-      return `<div class="lrow"><div class="ico">${g.icon}</div><div class="nm">${esc(g.label)}<small>${pct.toFixed(1)}%</small></div><div class="amt ${statTab==='income'?'green':'red'}">${fmt(g.amt)}</div></div>`;
+      return `<div class="lrow"><div class="ico" style="background:${cols[i%cols.length]}22;border-color:${cols[i%cols.length]}">${g.icon}</div><div class="nm">${esc(g.label)}<small>${pct.toFixed(1)}%</small></div><div class="amt ${statTab==='income'?'green':'red'}">${fmt(g.amt)}</div></div>`;
     }).join(''):'<div class="empty">本月無資料</div>'}</div>`;
   }
   body.innerHTML=inner;
@@ -952,9 +962,15 @@ function renderStats(){
 
 function donutChart(arr,total){
   if(!total) return '<div class="empty">本月無資料</div>';
+  const cols=statColors();
   let off=0, segs='';
-  arr.forEach((g,i)=>{ const pct=g.amt/total; const dash=pct*314; segs+=`<circle cx="60" cy="60" r="50" fill="none" stroke="${STAT_COLORS[i%STAT_COLORS.length]}" stroke-width="18" stroke-dasharray="${dash} ${314-dash}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`; off+=dash; });
-  return `<div style="text-align:center;padding:6px 0 14px"><svg viewBox="0 0 120 120" style="width:160px;height:160px">${segs}<circle cx="60" cy="60" r="40" fill="var(--bg)"/><text x="60" y="56" text-anchor="middle" font-size="9" fill="var(--sub)">總計</text><text x="60" y="72" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)" font-family="Outfit">${fmt(total)}</text></svg></div>`;
+  arr.forEach((g,i)=>{ const pct=g.amt/total; const dash=pct*314; segs+=`<circle cx="60" cy="60" r="50" fill="none" stroke="${cols[i%cols.length]}" stroke-width="18" stroke-dasharray="${dash} ${314-dash}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`; off+=dash; });
+  // 小圖例（最多顯示前 6 項）
+  const legend=arr.slice(0,6).map((g,i)=>{ const pct=total>0?(g.amt/total*100):0; return `<div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;margin-bottom:5px"><span style="width:10px;height:10px;border-radius:3px;background:${cols[i%cols.length]};flex-shrink:0"></span><span style="flex:1;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(g.label)}</span><span style="color:var(--sub)">${pct.toFixed(0)}%</span></div>`; }).join('');
+  return `<div style="display:flex;align-items:center;gap:14px;padding:6px 0 14px">
+    <svg viewBox="0 0 120 120" style="width:130px;height:130px;flex-shrink:0">${segs}<circle cx="60" cy="60" r="40" fill="var(--bg)"/><text x="60" y="56" text-anchor="middle" font-size="9" fill="var(--sub)">總計</text><text x="60" y="73" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)" font-family="Outfit">${fmt(total)}</text></svg>
+    <div style="flex:1;min-width:0">${legend}</div>
+  </div>`;
 }
 
 function renderTrend(){
