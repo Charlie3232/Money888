@@ -231,6 +231,8 @@ select.inp{appearance:none}
 .tutnav{display:flex;gap:10px;padding:6px 22px 24px}
 .bigbtn.ghost{background:rgba(42,26,46,.08);color:var(--ink)}
 .bigbtn:disabled{opacity:.4}
+.sortbtn{width:34px;height:34px;border:2px solid var(--inkline);background:#fff;border-radius:9px;font-size:13px;cursor:pointer;color:var(--ink);font-weight:700}
+.sortbtn:disabled{opacity:.3}
 .amtdisplay{font-size:42px;font-family:'Outfit';font-weight:700;text-align:right;padding:6px 4px 14px;color:var(--coral)}
 .picker{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.85);border:1.5px solid rgba(58,44,42,.15);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:700;cursor:pointer}
 .picker .ar{color:#b0a09a;font-size:18px}
@@ -301,6 +303,8 @@ select.inp{appearance:none}
 </div>
 
 <script>
+const APP_VERSION = 'v2026.06.05-loan-manual';
+console.log('查理的記帳APP 版本：' + APP_VERSION);
 const API_URL = 'https://script.google.com/macros/s/AKfycbz5gSWhKNxKdBWrxG2CCL9Ht5A_4cUE_S3SqOTdhPsf5mjpYhFC3ELnGs8RtCdMFl9jiA/exec';
 
 let DB = null;             // 全部資料
@@ -492,7 +496,7 @@ function calNav(dir){ calMonth+=dir; if(calMonth<0){calMonth=11;calYear--;} if(c
 const TYPE_LABEL={cash:'現金',bank:'銀行',broker:'證券戶',wealth:'理財帳戶',credit:'信用卡',borrow:'借入',lend:'借出'};
 function renderBank(){
   const t=totals();
-  const all=DB.accounts.filter(a=>String(a.archived)!=='true');
+  const all=DB.accounts.filter(a=>String(a.archived)!=='true').sort((a,b)=>(Number(a.sort)||0)-(Number(b.sort)||0));
   const depositAccs=all.filter(a=>['cash','bank','lend'].includes(a.type)||!a.type);
   const investAccs =all.filter(a=>['broker','wealth'].includes(a.type));
   const debtAccs   =all.filter(a=>['credit','borrow'].includes(a.type));
@@ -500,19 +504,43 @@ function renderBank(){
   let donut='', off=0; const total=t.cash||1;
   const cols=['#c06b54','#d27a62','#e29a82','#a8857a','#8a766e','#6f8a6a'];
   depositAccs.forEach((a,i)=>{ if(String(a.exclude)==='true')return; const pct=(Number(a.balance)||0)/total*100; const dash=Math.max(0,pct)*2.51; donut+=`<circle cx="60" cy="60" r="40" fill="none" stroke="${cols[i%cols.length]}" stroke-width="16" stroke-dasharray="${dash} 251" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`; off+=dash; });
-  const rowHtml=a=>{ const bal=Number(a.balance)||0; return `<div class="lrow" onclick="openEditAccount('${a.account_id}')"><div class="ico">${a.icon||'🏦'}</div>
+  const rowHtml=(a,arr,i)=>{ const bal=Number(a.balance)||0;
+    if(bankSortMode){
+      return `<div class="lrow"><div class="ico">${a.icon||'🏦'}</div>
+        <div class="nm">${esc(a.name)}<small>${TYPE_LABEL[a.type]||'未分類'}</small></div>
+        <div style="display:flex;gap:6px">
+          <button class="sortbtn" ${i===0?'disabled':''} onclick="moveAcc('${a.account_id}',-1)">▲</button>
+          <button class="sortbtn" ${i===arr.length-1?'disabled':''} onclick="moveAcc('${a.account_id}',1)">▼</button>
+        </div></div>`;
+    }
+    return `<div class="lrow" onclick="openEditAccount('${a.account_id}')"><div class="ico">${a.icon||'🏦'}</div>
     <div class="nm">${esc(a.name)}<small>${TYPE_LABEL[a.type]||'未分類'}${(String(a.exclude)==='true')?' · 不計入':''}</small></div>
     <div class="amt ${bal>=0?'green':'red'}">${fmt(bal)}</div></div>`; };
-  const depList=depositAccs.map(rowHtml).join('')||'<div class="empty">尚無帳戶</div>';
-  const invList=investAccs.length?investAccs.map(rowHtml).join(''):'';
-  const debtList=debtAccs.length?debtAccs.map(rowHtml).join(''):'';
+  const depList=depositAccs.length?depositAccs.map((a,i)=>rowHtml(a,depositAccs,i)).join(''):'<div class="empty">尚無帳戶</div>';
+  const invList=investAccs.length?investAccs.map((a,i)=>rowHtml(a,investAccs,i)).join(''):'';
+  const debtList=debtAccs.length?debtAccs.map((a,i)=>rowHtml(a,debtAccs,i)).join(''):'';
   document.getElementById('page-bank').innerHTML=`
     <div class="card"><h3>總存款</h3>
       <div style="text-align:center;padding:8px 0"><div class="big" style="font-size:38px;font-family:Outfit;font-weight:700;color:${t.cash>=0?'var(--green)':'var(--red)'}">$${fmt(t.cash)}</div></div>
     </div>
-    <div class="card"><h3>存款帳戶</h3>${depList}</div>
+    <div class="card"><h3>存款帳戶 <button class="save" style="font-size:12px;padding:4px 12px" onclick="toggleBankSort()">${bankSortMode?'完成':'排序'}</button></h3>${depList}</div>
     ${invList?`<div class="card"><h3>投資帳戶 <span style="color:var(--sub);font-weight:500">閒置現金 ${fmt(t.investCash)}</span></h3>${invList}</div>`:''}
     ${debtList?`<div class="card"><h3>信用卡 / 借入（負債）</h3>${debtList}</div>`:''}`;
+}
+let bankSortMode=false;
+function toggleBankSort(){ bankSortMode=!bankSortMode; renderBank(); }
+async function moveAcc(id,dir){
+  const all=DB.accounts.filter(a=>String(a.archived)!=='true').sort((a,b)=>(Number(a.sort)||0)-(Number(b.sort)||0));
+  const dep=all.filter(a=>['cash','bank','lend'].includes(a.type)||!a.type);
+  const i=dep.findIndex(a=>String(a.account_id)===String(id));
+  if(i<0) return; const j=i+dir; if(j<0||j>=dep.length) return;
+  // 交換順序
+  [dep[i],dep[j]]=[dep[j],dep[i]];
+  const ids=dep.map(a=>a.account_id);
+  // 本地先更新順序讓畫面即時反應
+  dep.forEach((a,k)=>{ const orig=DB.accounts.find(x=>x.account_id===a.account_id); if(orig)orig.sort=k+1; });
+  renderBank();
+  await apiPost('reorderAccounts',{ids});
 }
 
 // 投資
@@ -525,7 +553,7 @@ function renderInvest(){
   let list=hs.sort((a,b)=>(a.sort||0)-(b.sort||0)).map(h=>{
     const up=h.pl>=0;
     return `<div class="lrow" onclick="openEditHolding('${h.holding_id}')"><div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
-      <div class="nm">${esc(h.name)} <small>${esc(h.symbol)} · ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmt(h.avg_cost)} → 現 ${fmt(h.price)}</small></div>
+      <div class="nm">${esc(h.name)}${h.buy_mode==='dca'?' <span style="font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700">定期定額</span>':''} <small>${esc(h.symbol)} · ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmt(h.avg_cost)} → 現 ${fmt(h.price)}</small></div>
       <div style="text-align:right"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'red':'green'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
   }).join('')||'<div class="empty">尚無持倉，點右上新增</div>';
   document.getElementById('page-invest').innerHTML=`
@@ -707,10 +735,13 @@ async function delAcc(id){ if(!confirm('確定刪除？相關記錄不會自動�
 
 // ========== 持倉 ==========
 let holdDraft;
-function openAddHolding(){ holdDraft={type:'stock',symbol:'',fund_uid:'',name:'',shares:'0',avg_cost:'0',account_id:DB.accounts[0]?.account_id||''}; renderHoldModal('新增持倉'); }
-function openEditHolding(id){ const h=DB.holdings.find(x=>String(x.holding_id)===String(id)); if(!h)return; holdDraft={holding_id:h.holding_id,type:h.type,symbol:h.symbol,fund_uid:h.fund_uid,name:h.name,shares:String(h.shares),avg_cost:String(h.avg_cost),account_id:h.account_id}; renderHoldModal('編輯持倉',true); }
+function openAddHolding(){ holdDraft={type:'stock',symbol:'',fund_uid:'',name:'',shares:'0',avg_cost:'0',account_id:DB.accounts[0]?.account_id||'',buy_mode:'single',invest_amount:'',buy_date:todayStr(),dca_amount:'',dca_day:'1',dca_account:DB.accounts[0]?.account_id||''}; renderHoldModal('新增持倉'); }
+function openEditHolding(id){ const h=DB.holdings.find(x=>String(x.holding_id)===String(id)); if(!h)return; holdDraft={holding_id:h.holding_id,type:h.type,symbol:h.symbol,fund_uid:h.fund_uid,name:h.name,shares:String(h.shares||''),avg_cost:String(h.avg_cost||''),account_id:h.account_id,buy_mode:h.buy_mode||'single',invest_amount:String(h.total_cost||''),buy_date:todayStr(),dca_amount:String(h.dca_amount||''),dca_day:String(h.dca_day||'1'),dca_account:h.dca_account||h.account_id}; renderHoldModal('編輯持倉',true); }
 function renderHoldModal(title,edit){
-  const accs=DB.accounts.filter(a=>String(a.archived)!=='true').map(a=>`<option value="${a.account_id}" ${holdDraft.account_id===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
+  const accs=DB.accounts.filter(a=>String(a.archived)!=='true');
+  const accOpts=(sel)=>accs.map(a=>`<option value="${a.account_id}" ${holdDraft[sel]===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
+  const isStock=holdDraft.type==='stock';
+  const isDca=holdDraft.buy_mode==='dca';
   const m=openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveHold(${edit?true:false})">儲存</button></div>
     <div class="mscroll">
@@ -721,20 +752,83 @@ function renderHoldModal(title,edit){
       <div class="field"><label>代號 ${holdDraft.type==='fund'?'(基金短碼，如 51AL)':'(股號，如 2330)'}</label><input class="inp" id="hSym" value="${esc(holdDraft.symbol)}"></div>
       <div class="field" id="hUidField" style="${holdDraft.type==='fund'?'':'display:none'}"><label>基金統編 (選填)</label><input class="inp" id="hUid" value="${esc(holdDraft.fund_uid)}" placeholder="如 73989002A"></div>
       <div class="field"><label>名稱</label><input class="inp" id="hName" value="${esc(holdDraft.name)}"></div>
-      <div class="field"><label>${holdDraft.type==='fund'?'單位數':'股數'}</label><input class="inp" id="hShares" type="number" value="${holdDraft.shares}"></div>
-      <div class="field"><label>平均成本 (每股/每單位)</label><input class="inp" id="hCost" type="number" value="${holdDraft.avg_cost}"></div>
-      <div class="field"><label>帳戶</label><select class="inp" id="hAcc">${accs}</select></div>
+
+      ${isStock?`
+      <div class="field"><label>股數</label><input class="inp" id="hShares" type="number" value="${holdDraft.shares}"></div>
+      <div class="field"><label>平均成本 (每股)</label><input class="inp" id="hCost" type="number" value="${holdDraft.avg_cost}"></div>
+      <div class="field"><label>帳戶</label><select class="inp" id="hAcc">${accOpts('account_id')}</select></div>
+      `:`
+      <div class="field"><label>購買方式</label><div class="seg2">
+        <button class="${holdDraft.buy_mode==='single'?'on':''}" onclick="setBuyMode('single')">單筆</button>
+        <button class="${holdDraft.buy_mode==='dca'?'on':''}" onclick="setBuyMode('dca')">定期定額</button></div></div>
+      ${isDca?`
+        <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">每月到扣款日，系統自動用當天淨值/股價買入並累加成本。</div>
+        <div class="field"><label>每期扣款金額</label><input class="inp" id="hDcaAmt" type="number" value="${holdDraft.dca_amount}" placeholder="例如 5000"></div>
+        <div class="field"><label>每月扣款日 (1-28)</label><input class="inp" id="hDcaDay" type="number" min="1" max="28" value="${holdDraft.dca_day}"></div>
+        <div class="field"><label>扣款帳戶</label><select class="inp" id="hDcaAcc">${accOpts('dca_account')}</select></div>
+      `:`
+        <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">系統用建立當天的淨值/股價，把投入金額換算成單位數。</div>
+        <div class="field"><label>投入金額</label><input class="inp" id="hAmt" type="number" value="${holdDraft.invest_amount}" placeholder="例如 50000"></div>
+        <div class="field"><label>建立日期</label><input class="inp" id="hDate" type="date" value="${holdDraft.buy_date}"></div>
+        <div class="field"><label>扣款帳戶</label><select class="inp" id="hAcc">${accOpts('account_id')}</select></div>
+      `}
+      `}
       ${edit?`<button class="bigbtn btn-danger" onclick="delHold('${holdDraft.holding_id}')">刪除</button>`:''}
     </div>`);
 }
-function setHoldType(t,btn){ holdDraft.type=t; btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); document.getElementById('hUidField').style.display=(t==='fund')?'block':'none'; }
+function setHoldType(t,btn){
+  holdDraft.type=t;
+  // 同步已填欄位
+  syncHoldDraft();
+  closeModal(document.querySelectorAll('.modal')[document.querySelectorAll('.modal').length-1]);
+  renderHoldModal(holdDraft.holding_id?'編輯持倉':'新增持倉', !!holdDraft.holding_id);
+}
+function setBuyMode(m){
+  holdDraft.buy_mode=m;
+  syncHoldDraft();
+  closeModal(document.querySelectorAll('.modal')[document.querySelectorAll('.modal').length-1]);
+  renderHoldModal(holdDraft.holding_id?'編輯持倉':'新增持倉', !!holdDraft.holding_id);
+}
+function syncHoldDraft(){
+  // 把目前畫面上的輸入值存回 draft（切換時不遺失）
+  const g=id=>{const e=document.getElementById(id);return e?e.value:undefined;};
+  if(g('hSym')!==undefined)holdDraft.symbol=g('hSym');
+  if(g('hUid')!==undefined)holdDraft.fund_uid=g('hUid');
+  if(g('hName')!==undefined)holdDraft.name=g('hName');
+  if(g('hShares')!==undefined)holdDraft.shares=g('hShares');
+  if(g('hCost')!==undefined)holdDraft.avg_cost=g('hCost');
+  if(g('hAmt')!==undefined)holdDraft.invest_amount=g('hAmt');
+  if(g('hDate')!==undefined)holdDraft.buy_date=g('hDate');
+  if(g('hDcaAmt')!==undefined)holdDraft.dca_amount=g('hDcaAmt');
+  if(g('hDcaDay')!==undefined)holdDraft.dca_day=g('hDcaDay');
+  if(g('hAcc')!==undefined)holdDraft.account_id=g('hAcc');
+  if(g('hDcaAcc')!==undefined)holdDraft.dca_account=g('hDcaAcc');
+}
 async function saveHold(edit){
-  const p={type:holdDraft.type,symbol:document.getElementById('hSym').value.trim(),fund_uid:document.getElementById('hUid')?document.getElementById('hUid').value.trim():'',name:document.getElementById('hName').value.trim(),shares:Number(document.getElementById('hShares').value)||0,avg_cost:Number(document.getElementById('hCost').value)||0,account_id:document.getElementById('hAcc').value,currency:'TWD',active:true};
+  syncHoldDraft();
+  const type=holdDraft.type;
+  const p={type:type,symbol:holdDraft.symbol.trim(),fund_uid:(holdDraft.fund_uid||'').trim(),name:holdDraft.name.trim(),account_id:holdDraft.account_id,currency:'TWD',active:true};
   if(!p.symbol||!p.name){ toast('請填代號和名稱'); return; }
+  if(type==='stock'){
+    p.shares=Number(holdDraft.shares)||0; p.avg_cost=Number(holdDraft.avg_cost)||0; p.buy_mode='single';
+  }else{
+    p.buy_mode=holdDraft.buy_mode;
+    if(holdDraft.buy_mode==='dca'){
+      p.dca_amount=Number(holdDraft.dca_amount)||0;
+      p.dca_day=Number(holdDraft.dca_day)||1;
+      p.dca_account=holdDraft.dca_account;
+      if(!p.dca_amount){ toast('請填每期扣款金額'); return; }
+    }else{
+      p.invest_amount=Number(holdDraft.invest_amount)||0;
+      p.buy_date=holdDraft.buy_date;
+      if(!p.invest_amount){ toast('請填投入金額'); return; }
+    }
+  }
+  toast('儲存中…');
   let res;
   if(edit){ p.holding_id=holdDraft.holding_id; res=await apiPost('updateHolding',{payload:p}); }
   else { p.sort=DB.holdings.length+1; res=await apiPost('addHolding',{payload:p}); }
-  if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存，下次抓價會更新現值'); }
+  if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); } else toast('儲存失敗');
 }
 async function delHold(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteHolding',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
 
@@ -749,7 +843,7 @@ function openSettings(){
       <div class="setrow" onclick="openRecurrings()"><span class="e">🔁</span>週期支出 / 轉帳<span class="ar">›</span></div>
       <div class="setrow" onclick="openMembers()"><span class="e">👥</span>成員管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openTutorial()"><span class="e">📖</span>使用教學<span class="ar">›</span></div>
-      <div class="setrow" onclick="toast('我的資產 v1.0')"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
+      <div class="setrow" onclick="toast('我的資產 '+APP_VERSION)"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
     </div>`);
 }
 
