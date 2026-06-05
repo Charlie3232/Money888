@@ -173,36 +173,63 @@ select.inp{appearance:none}
 .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:9px 14px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,#e6ebdf,#dde3d3);border-top:1px solid rgba(176,138,58,.15);flex-shrink:0}
 .kp button{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:14px;padding:13px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:#4a5238;box-shadow:0 2px 6px rgba(176,138,58,.08),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .06s}
 .kp button:active{transform:scale(.94);background:linear-gradient(160deg,#e8efe0,#dde6d0)}
-/* 教學模擬畫面 */
-.mockwrap{display:flex;justify-content:center;padding:8px 22px}
-.mock{width:230px;background:#f6efec;border:6px solid #2e211d;border-radius:26px;padding:12px 10px;display:flex;flex-direction:column;gap:7px;box-shadow:0 10px 30px rgba(58,44,42,.2)}
-.mock .mhero{background:linear-gradient(150deg,#2d352a,#1a1f16);border-radius:14px;padding:12px;color:#fff}
-.mock .ml{font-size:9px;color:rgba(255,255,255,.85);font-weight:700}
-.mock .mbig{font-size:20px;font-weight:700;font-family:'Outfit';color:#fff}
-.mock .mup{font-size:9px;color:#e8b4a0;margin-top:3px}
-.mock .mcard,.mock .mcardh{font-size:10px}
-.mock .mcardh{font-weight:700;color:var(--sub);margin-top:4px}
-.mock .mgrid{display:flex;flex-wrap:wrap;gap:4px}
-.mock .mg{background:rgba(192,107,84,.1);border-radius:7px;padding:6px 8px;font-size:10px;font-weight:700;flex:1;white-space:nowrap}
-.mock .mg.full{flex-basis:100%}
-.mock .mseg{display:flex;background:rgba(58,44,42,.07);border-radius:8px;padding:2px;font-size:10px;font-weight:700}
-.mock .mseg span{flex:1;text-align:center;padding:5px;border-radius:6px;color:var(--sub)}
-.mock .mseg span.on{background:#fff;color:var(--ink)}
-.mock .mrow{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;padding:6px 4px;border-bottom:1px solid rgba(58,44,42,.06)}
-.mock .mmeta{font-size:9px;color:var(--sub);padding:1px 4px}
-.mock .mbar{height:6px;background:#dde2d4;border-radius:4px;overflow:hidden;margin:3px 4px}
-.mock .mbar i{display:block;height:100%;background:linear-gradient(90deg,#d27a62,#e29a82)}
-.mock .mkp{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
-.mock .mkp i{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:8px;padding:7px;text-align:center;font-size:13px;font-weight:700;font-family:'Outfit';color:#4a5238;font-style:normal}
-.mock .mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-.mock .mcal i{aspect-ratio:1;background:rgba(58,44,42,.05);border-radius:5px;font-size:9px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;position:relative}
-.mock .mcal i.on{background:#c06b54;color:#fff}
-.mock .mcal i.dot::after{content:'';width:3px;height:3px;border-radius:50%;background:#d27a62;position:absolute;bottom:2px}
-.mock .msum{display:flex;gap:5px}
-.mock .msum span{flex:1;text-align:center;background:rgba(255,255,255,.6);border-radius:7px;padding:5px;font-size:10px;font-weight:700;font-family:'Outfit'}
-.mock .mdonut{width:70px;height:70px;border-radius:50%;margin:6px auto;background:conic-gradient(#c06b54 0 42%,#d27a62 42% 60%,#e29a82 60% 78%,#8aa3c4 78% 100%)}
-.tstep{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px;font-size:14px;line-height:1.6}
-.tnum{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--coral);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Outfit'}
+/* 使用教學：完整畫面 + 高亮指示 */
+.tutscroll{display:flex;flex-direction:column;padding:0}
+.ttabs{display:flex;gap:5px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;flex-shrink:0}
+.ttabs::-webkit-scrollbar{display:none}
+.ttabbtn{flex-shrink:0;border:2px solid var(--inkline);background:#fff;color:var(--ink);font-weight:800;font-size:12px;padding:7px 13px;border-radius:20px;cursor:pointer}
+.ttabbtn.on{background:var(--coral);color:#fff}
+.tutmockwrap{display:flex;justify-content:center;padding:6px 16px 10px}
+.tphone{width:200px;border:5px solid var(--inkline);border-radius:26px;overflow:hidden;background:var(--bg);box-shadow:4px 4px 0 var(--inkline)}
+.tscreen{position:relative;height:320px;background:var(--bg);overflow:hidden}
+.tani .thl{animation:hlpulse 1.2s ease-in-out infinite}
+@keyframes hlpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,106,62,.5)}50%{box-shadow:0 0 0 6px rgba(255,106,62,0)}}
+.tbar{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;font-size:11px;font-weight:800;border-bottom:1.5px solid var(--inkline);background:var(--bg)}
+.tbar .tg{font-size:11px}.tbar .tseg{font-size:9px;color:var(--sub)}.tbar .tseg b{color:var(--ink)}
+.tbody{padding:8px;display:flex;flex-direction:column;gap:6px}
+.thero{background:var(--herograd);border:1.5px solid var(--inkline);border-radius:11px;padding:9px;color:#fff}
+.thero .tl{font-size:8px;opacity:.85}.thero .tb{font-size:17px;font-weight:800;font-family:'Outfit'}.thero .tup{font-size:8px;background:linear-gradient(135deg,#8fb89a,#6f8a6a);display:inline-block;padding:1px 6px;border-radius:8px;margin-top:4px}
+.tcard{background:#fff;border:1.5px solid var(--inkline);border-radius:10px;padding:9px}
+.tcard .th{font-size:9px;font-weight:800;color:var(--sub);margin-bottom:6px;display:flex;justify-content:space-between}
+.tcard .tref{color:var(--coral);font-size:8px}
+.tbig{font-size:18px;font-weight:800;font-family:'Outfit'}
+.tg5{display:flex;flex-wrap:wrap;gap:3px}
+.tg5 .g{background:rgba(255,140,60,.1);border-radius:5px;padding:4px 6px;font-size:8px;font-weight:700;flex:1;white-space:nowrap}
+.tg5 .g.full{flex-basis:100%}
+.tr{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:700;padding:5px 2px;border-bottom:1px solid rgba(42,26,46,.07)}
+.tr.big{font-size:13px}.tr b{font-family:'Outfit'}
+.tmeta{font-size:8px;color:var(--sub);padding:1px 2px}
+.tcal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.tcal u{aspect-ratio:1;background:rgba(42,26,46,.05);border-radius:4px;font-size:8px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;position:relative}
+.tcal u.on{background:var(--coral);color:#fff}
+.tcal u.dot::after{content:'';width:3px;height:3px;border-radius:50%;background:var(--coral);position:absolute;bottom:1px}
+.tsum3{display:flex;gap:4px}.tsum3 span{flex:1;text-align:center;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:3px;font-size:9px;font-weight:800;font-family:'Outfit'}
+.trec{display:flex;flex-direction:column}
+.ttab{display:flex;align-items:center;justify-content:space-around;border-top:1.5px solid var(--inkline);padding:6px 4px;font-size:8px;font-weight:700;background:var(--bg)}
+.ttab .act{color:var(--coral)}.ttab i{width:24px;height:24px;border-radius:50%;background:var(--coral);color:#fff;border:1.5px solid var(--inkline);display:flex;align-items:center;justify-content:center;font-style:normal;margin-top:-12px}
+.tkp{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:6px 8px;background:#f0e3d8;border-top:1.5px solid var(--inkline)}
+.tkp i{background:#fff;border:1px solid rgba(42,26,46,.15);border-radius:6px;padding:5px;text-align:center;font-size:11px;font-weight:700;font-style:normal;font-family:'Outfit'}
+.tf{margin-bottom:7px}.tf label{font-size:8px;color:var(--sub);font-weight:700;display:block;margin-bottom:3px}
+.tf .ti{background:#fff;border:1.5px solid var(--inkline);border-radius:7px;padding:6px 8px;font-size:10px;font-weight:700}
+.tseg2{display:flex;gap:4px}.tseg2 b,.tseg2 span{flex:1;text-align:center;font-size:9px;padding:5px;border:1.5px solid var(--inkline);border-radius:6px;font-weight:700}.tseg2 b{background:var(--coral);color:#fff}
+.temo{font-size:14px;letter-spacing:3px}
+.tsr{background:#fff;border:1.5px solid var(--inkline);border-radius:9px;padding:8px 10px;font-size:10px;font-weight:700;margin-bottom:5px}
+.tym{text-align:center;font-size:10px;font-weight:800;padding:4px}
+.tseg3{display:flex;background:rgba(42,26,46,.06);border-radius:7px;padding:2px;font-size:9px;font-weight:700}
+.tseg3 b,.tseg3 span{flex:1;text-align:center;padding:4px;border-radius:5px;color:var(--sub)}.tseg3 b{background:#fff;color:var(--ink)}
+.tdonut{width:56px;height:56px;border-radius:50%;margin:4px auto;background:conic-gradient(#c97a6d 0 42%,#b59ac4 42% 62%,#d4a85e 62% 80%,#8aa3b8 80% 100%)}
+.tbars{display:flex;align-items:flex-end;gap:5px;height:70px;padding:4px}
+.tbars span{flex:1;background:linear-gradient(180deg,#8fb89a,#6f8a6a);border-radius:3px 3px 0 0}
+.thl{position:absolute;border:2.5px solid var(--coral);border-radius:8px;background:rgba(255,106,62,.08);pointer-events:none;z-index:5}
+.thlab{position:absolute;transform:translate(-50%,0);background:var(--inkline);color:#fff;font-size:9px;font-weight:700;padding:4px 8px;border-radius:7px;white-space:nowrap;z-index:6;max-width:170px}
+.tutstepbox{display:flex;gap:11px;align-items:flex-start;padding:4px 22px 8px}
+.tutstepno{flex-shrink:0;background:var(--coral);color:#fff;font-weight:800;font-size:13px;font-family:'Outfit';padding:4px 10px;border-radius:20px;border:2px solid var(--inkline)}
+.tutsteptxt{font-size:14px;line-height:1.7;flex:1}
+.tdots{display:flex;gap:6px;justify-content:center;padding:8px}
+.tdot{width:7px;height:7px;border-radius:50%;background:rgba(42,26,46,.2)}.tdot.on{background:var(--coral);width:18px;border-radius:4px}
+.tutnav{display:flex;gap:10px;padding:6px 22px 24px}
+.bigbtn.ghost{background:rgba(42,26,46,.08);color:var(--ink)}
+.bigbtn:disabled{opacity:.4}
 .amtdisplay{font-size:42px;font-family:'Outfit';font-weight:700;text-align:right;padding:6px 4px 14px;color:var(--coral)}
 .picker{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.85);border:1.5px solid rgba(58,44,42,.15);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:700;cursor:pointer}
 .picker .ar{color:#b0a09a;font-size:18px}
@@ -614,7 +641,7 @@ function openCatPicker(){
   const cats=DB.categories.filter(c=>c.type===txnDraft.type&&String(c.archived)!=='true').sort((a,b)=>(a.sort||0)-(b.sort||0));
   const grid=cats.map(c=>`<div class="cbox" onclick="pickCat('${c.category_id}','${c.icon}','${esc(c.name)}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('')||'<div class="empty">先到設定新增分類</div>';
   openModal(`
-    <div class="mtop"><button class="x" onclick="closeTopModal()">‹ 返回</button><div class="t">選擇分類</div><span style="width:40px"></span></div>
+    <div class="mtop"><button class="x" style="width:auto;white-space:nowrap;font-size:15px" onclick="closeTopModal()">‹ 返回</button><div class="t">選擇分類</div><span style="width:40px"></span></div>
     <div class="mscroll"><div class="cgrid">${grid}</div></div>`);
 }
 function pickCat(id,icon,name){ txnDraft.category_id=id; const el=document.getElementById('catPickTxt'); if(el){ el.classList.remove('ph'); el.innerHTML=esc(name)+' <span class="ar">›</span>'; } const row=document.getElementById('txnCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; } closeTopModal(); }
@@ -895,9 +922,9 @@ async function delMem(id){ if(!confirm('確定刪除？'))return; const res=awai
 
 // ========== 統計分析 ==========
 // 支出：紅粉橘莫蘭迪系
-const STAT_EXP_COLORS=['#c97a6d','#d99a8a','#e0b0a0','#cf8f9c','#d4a5b0','#e2b89a','#c98a6a','#bb6a6a','#dba890','#c4848f','#e0a888','#d09a8a'];
-// 收入：綠藍黃灰莫蘭迪系
-const STAT_INC_COLORS=['#7a9a6e','#8fb89a','#8aa3c4','#9ab0c4','#c4b87a','#d4c88a','#a8b090','#9aab84','#8fb0a8','#b0a884','#90a8b0','#a4b09a'];
+// 莫蘭迪多色系（色相分散，相鄰差異明顯，但都低飽和柔和）
+const STAT_EXP_COLORS=['#c97a6d','#b59ac4','#d4a85e','#8aa3b8','#cf8fa8','#9aae84','#dba07a','#a890b0','#c4b06a','#7fa898'];
+const STAT_INC_COLORS=['#7a9a6e','#8aa3c4','#c4b87a','#b59ac4','#d49a8a','#9ab0a0','#c4a06a','#8fb0c0','#aab084','#cf9ab0'];
 function statColors(){ return statTab==='income'?STAT_INC_COLORS:STAT_EXP_COLORS; }
 let statYear, statMonth, statTab='expense', statSub='category';
 function openStats(){
@@ -1038,64 +1065,133 @@ function renderTrend(){
 }
 
 // ========== 使用教學（翻頁） ==========
-let tutPage=0;
-// 迷你 App 畫面模擬（CSS）
-const MOCK={
-  home:`<div class="mock"><div class="mhero"><div class="ml">淨資產</div><div class="mbig">$2,847,200</div><div class="mup">↑ 2.4% 本月</div></div>
-    <div class="mcard"><div class="mgrid"><div class="mg full">總資產 3.6M</div><div class="mg">存款 680K</div><div class="mg">股票 1.2M</div></div></div></div>`,
-  add:`<div class="mock"><div class="mseg"><span class="on">支出</span><span>收入</span><span>轉帳</span></div>
-    <div class="mrow"><span>💰 金額</span><b style="color:#c06b54">280</b></div>
-    <div class="mrow"><span>🏷️ 類別</span><b>飲食 ›</b></div>
-    <div class="mrow"><span>👛 帳戶</span><b>現金 ›</b></div>
-    <div class="mkp">${[1,2,3,4,5,6].map(n=>`<i>${n}</i>`).join('')}</div></div>`,
-  book:`<div class="mock"><div class="mcal">${Array.from({length:14}).map((_,i)=>`<i class="${i===4?'on':i===2||i===6?'dot':''}">${i+1}</i>`).join('')}</div>
-    <div class="msum"><span class="green">+62K</span><span class="red">−680</span><span class="green">+61K</span></div>
-    <div class="mrow"><span>🍜 午餐</span><b class="red">−180</b></div><div class="mrow"><span>🚇 交通</span><b class="red">−500</b></div></div>`,
-  bank:`<div class="mock"><div class="mcardh">存款帳戶</div><div class="mrow"><span>💵 國泰</span><b class="green">320K</b></div><div class="mrow"><span>🏦 台新</span><b class="green">279K</b></div>
-    <div class="mcardh">投資帳戶</div><div class="mrow"><span>📈 證券戶</span><b class="green">50K</b></div></div>`,
-  invest:`<div class="mock"><div class="mhero" style="padding:14px"><div class="ml">投資總覽</div><div class="mbig" style="font-size:22px;color:#fff">$2.9M</div><div class="mup">未實現 +12.4%</div></div>
-    <div class="mrow"><span>台積電 2330</span><b class="red">+38.8%</b></div><div class="mrow"><span>0050</span><b class="green">−2.1%</b></div></div>`,
-  loan:`<div class="mock"><div class="mcardh">貸款餘額</div><div class="mrow"><span>🏡 房貸</span><b class="red">680K</b></div>
-    <div class="mmeta">利率 2.06% · 月繳 18,420 · 剩 187 期</div><div class="mbar"><i style="width:32%"></i></div></div>`,
-  recur:`<div class="mock"><div class="mcardh">週期支出 / 轉帳</div><div class="mrow"><span>🏠 房租</span><b class="red">−15,000</b></div><div class="mmeta">每月 · 下次 7/01</div>
-    <div class="mrow"><span>📊 定期定額</span><b class="red">−3,000</b></div><div class="mmeta">每月 · 下次 7/05</div></div>`,
-  member:`<div class="mock"><div class="mcardh">成員管理</div><div class="mrow"><span>👨 陳先生</span><b>✎</b></div><div class="mrow"><span>👩 陳太太</span><b>✎</b></div>
-    <div class="mrow" style="opacity:.5"><span>＋ 新增成員</span><b></b></div></div>`,
-  stats:`<div class="mock"><div class="mseg"><span class="on">支出</span><span>收入</span><span>趨勢</span></div>
-    <div class="mdonut"></div><div class="mrow"><span>🍜 飲食</span><b class="red">12,400 · 42%</b></div><div class="mrow"><span>🚇 交通</span><b class="red">5,200 · 18%</b></div></div>`
+// ========== 使用教學（6 大項，子步驟，完整畫面 + 位置指示） ==========
+let tutSec=0, tutStep=0;
+// 完整 App 畫面 mock，可帶高亮位置 hl（用脈動光圈指出）
+function tutMock(screen, hl){
+  // hl: {top,left,w,h,label,dir} 高亮框（百分比定位）
+  const ring = hl?`<div class="thl" style="top:${hl.top};left:${hl.left};width:${hl.w};height:${hl.h}"></div>
+    ${hl.label?`<div class="thlab" style="top:${hl.lt||hl.top};left:${hl.ll||'50%'}">${hl.label}</div>`:''}`:'';
+  return `<div class="tphone"><div class="tscreen tani">${screen}${ring}</div></div>`;
+}
+// 各畫面（完整版，含頂列、底部 tab）
+const SCR={
+  home:`<div class="tbar"><b>主頁</b><span class="tg">📊 ⚙️</span></div>
+    <div class="tbody"><div class="thero"><div class="tl">淨資產</div><div class="tb">$2,847,200</div><div class="tup">↑ 2.4% 本月</div></div>
+    <div class="tcard"><div class="th">資產總覽</div><div class="tg5"><span class="g full">總資產 3.6M</span><span class="g">存款 680K</span><span class="g">股票 1.2M</span><span class="g">ETF 720K</span><span class="g">基金 480K</span></div></div></div>
+    <div class="ttab"><span>主頁</span><span>記帳本</span><i>＋</i><span>存款</span><span>投資</span></div>`,
+  book:`<div class="tbar"><b>記帳本</b></div>
+    <div class="tbody"><div class="tcal">${Array.from({length:21}).map((_,i)=>`<u class="${i===10?'on':[3,7,12].includes(i)?'dot':''}">${i+1}</u>`).join('')}</div>
+    <div class="tsum3"><span class="green">+62K</span><span class="red">−680</span><span class="green">+61K</span></div>
+    <div class="trec"><div class="tr"><span>🍜 午餐</span><b class="red">−180</b></div><div class="tr"><span>🚇 交通</span><b class="red">−500</b></div></div></div>
+    <div class="ttab"><span>主頁</span><span class="act">記帳本</span><i>＋</i><span>存款</span><span>投資</span></div>`,
+  add:`<div class="tbar"><span>✕</span><span class="tseg"><b>支出</b>收入 轉帳</span><span>儲存</span></div>
+    <div class="tbody"><div class="tr big"><span>💰 金額</span><b class="red">280</b></div>
+    <div class="tr"><span>🏷️ 類別</span><b>飲食 ›</b></div><div class="tr"><span>👛 帳戶</span><b>現金 ›</b></div><div class="tr"><span>👤 成員</span><b>陳先生 ›</b></div></div>
+    <div class="tkp">${[1,2,3,4,5,6,7,8,9].map(n=>`<i>${n}</i>`).join('')}</div>`,
+  addbtn:`<div class="tbar"><b>主頁</b><span class="tg">📊 ⚙️</span></div>
+    <div class="tbody"><div class="thero"><div class="tl">淨資產</div><div class="tb">$2,847,200</div></div><div class="tcard"><div class="th">資產總覽</div><div class="tg5"><span class="g full">總資產 3.6M</span></div></div></div>
+    <div class="ttab"><span>主頁</span><span>記帳本</span><i>＋</i><span>存款</span><span>投資</span></div>`,
+  bank:`<div class="tbar"><b>存款</b><span class="tg">＋ 新增</span></div>
+    <div class="tbody"><div class="tcard"><div class="th">總存款</div><div class="tbig green">$599,000</div></div>
+    <div class="tcard"><div class="th">存款帳戶</div><div class="tr"><span>💵 國泰</span><b class="green">320K</b></div><div class="tr"><span>🏦 台新</span><b class="green">279K</b></div></div>
+    <div class="tcard"><div class="th">投資帳戶</div><div class="tr"><span>📈 證券戶</span><b class="green">50K</b></div></div></div>
+    <div class="ttab"><span>主頁</span><span>記帳本</span><i>＋</i><span class="act">存款</span><span>投資</span></div>`,
+  bankadd:`<div class="tbar"><span>✕</span><b>新增帳戶</b><span>儲存</span></div>
+    <div class="tbody"><div class="tf"><label>名稱</label><div class="ti">玉山銀行</div></div>
+    <div class="tf"><label>帳戶性質</label><div class="ti">證券戶 ▾</div></div>
+    <div class="tf"><label>計入設定</label><div class="tseg2"><b>計入總資產</b><span>不計入</span></div></div></div>`,
+  invest:`<div class="tbar"><b>投資</b><span class="tg">＋ 新增</span></div>
+    <div class="tbody"><div class="tcard"><div class="th">投資總覽 <span class="tref">↻ 更新現價</span></div><div class="tbig green">$2,920,500</div><div class="green" style="font-size:11px">未實現 +12.4%</div></div>
+    <div class="tcard"><div class="tr"><span>台積電 2330</span><b class="red">+38.8%</b></div><div class="tr"><span>0050</span><b class="green">−2.1%</b></div></div></div>
+    <div class="ttab"><span>主頁</span><span>記帳本</span><i>＋</i><span>存款</span><span class="act">投資</span></div>`,
+  settings:`<div class="tbar"><b>設定</b></div>
+    <div class="tbody"><div class="tsr">🏷️ 分類管理 ›</div><div class="tsr">💳 貸款管理 ›</div><div class="tsr">🔁 週期支出 / 轉帳 ›</div><div class="tsr">👥 成員管理 ›</div><div class="tsr">📖 使用教學 ›</div></div>`,
+  loan:`<div class="tbar"><span>✕</span><b>新增貸款</b><span>儲存</span></div>
+    <div class="tbody"><div class="tf"><label>名稱</label><div class="ti">房屋貸款</div></div><div class="tf"><label>圖示</label><div class="temo">🏡 🏠 🚗 💳 🎓</div></div>
+    <div class="tf"><label>本金 / 利率 / 期數</label><div class="ti">5,000,000 · 2.06% · 240</div></div></div>`,
+  recur:`<div class="tbar"><span>✕</span><b>週期支出 / 轉帳</b><span>＋</span></div>
+    <div class="tbody"><div class="tr"><span>🏠 房租</span><b class="red">−15,000</b></div><div class="tmeta">每月 · 下次 7/01</div>
+    <div class="tr"><span>📊 定期定額</span><b class="red">−3,000</b></div><div class="tmeta">每月 · 下次 7/05</div></div>`,
+  member:`<div class="tbar"><span>✕</span><b>成員管理</b><span>＋</span></div>
+    <div class="tbody"><div class="tr"><span>👨 陳先生</span><b>✎</b></div><div class="tr"><span>👩 陳太太</span><b>✎</b></div></div>`,
+  stats:`<div class="tbar"><b>統計分析</b></div>
+    <div class="tbody"><div class="tym">‹ 2026 年 6 月 ›</div><div class="tseg3"><b>支出</b><span>收入</span><span>趨勢</span></div>
+    <div class="tcard"><div class="tdonut"></div><div class="tr"><span>🍜 飲食</span><b class="red">12,400 · 42%</b></div></div></div>`,
+  trend:`<div class="tbar"><b>統計分析</b></div>
+    <div class="tbody"><div class="tseg3"><span>支出</span><span>收入</span><b>趨勢</b></div>
+    <div class="tcard"><div class="th">近 6 個月收支趨勢</div><div class="tbars">${[40,60,35,70,55,80].map(h=>`<span style="height:${h}%"></span>`).join('')}</div></div></div>`
 };
-const TUT=[
-  {m:'home',title:'主頁・總覽',steps:['最上方是你的<b>淨資產</b>，下方趨勢線隨每日累積','「資產總覽」5 格，<b>點任一格</b>跳到對應頁','往下是貸款餘額、本月收支']},
-  {m:'add',title:'記一筆',steps:['點底部中央 <b>＋</b> 開始記帳','上方切換 <b>支出／收入／轉帳</b>','用莫蘭迪鍵盤輸入金額，選類別、帳戶、成員','在記帳本選日期再按＋，會帶入那天']},
-  {m:'book',title:'記帳本',steps:['上方月曆顯示整月，有記錄的日子有<b>小點</b>','點任一天看<b>當日明細</b>，框內可上下滑','小結：收入綠、支出紅、合計']},
-  {m:'bank',title:'存款・帳戶',steps:['三區：<b>存款</b>、<b>投資帳戶</b>、<b>負債</b>','右上「新增」加帳戶','選<b>帳戶性質</b>決定歸哪一區，信用卡預設不計入資產']},
-  {m:'invest',title:'投資・持倉',steps:['股票/ETF 每日收盤自動抓價','按 <b>↻ 更新現價</b> 立即抓盤中價','基金每月自行更新淨值','新增持倉會<b>自動從帳戶扣成本</b>，記得先轉錢到證券戶']},
-  {m:'loan',title:'貸款・試算',steps:['設定→貸款管理新增','填本金、年利率、期數、起始日','自動算<b>月繳、剩餘本金、剩餘期數</b>']},
-  {m:'recur',title:'週期支出／轉帳',steps:['設定→週期支出建立固定項目','適合房租、<b>定期定額</b>基金','每天 00:15 自動記一筆，漏跑會補齊']},
-  {m:'member',title:'成員',steps:['設定→成員管理新增家人','記帳時指定花費<b>歸屬於誰</b>','統計分析可看各成員花費比例']},
-  {m:'stats',title:'統計分析',steps:['主頁右上<b>長條圖</b>圖示進入','支出/收入的類別、帳戶、成員比（圓餅圖）','近 6 個月<b>收支趨勢</b>']}
+// 6 大項 → 每項數個子步驟
+const TUTSEC=[
+  {name:'記帳本',steps:[
+    {scr:'book',hl:{top:'8%',left:'6%',w:'88%',h:'34%',label:'① 上方月曆，有記錄的日子有小點',lt:'43%'},t:'月曆顯示整月。<b>有記帳的日子下方有小圓點</b>，一眼看出哪天有花費。'},
+    {scr:'book',hl:{top:'30%',left:'30%',w:'14%',h:'8%',label:'② 點任一天',lt:'40%',ll:'30%'},t:'<b>點任一天</b>，下方會切換成那天的明細與小結。'},
+    {scr:'book',hl:{top:'43%',left:'6%',w:'88%',h:'9%',label:'③ 當日小結：收入/支出/合計',lt:'53%'},t:'這條顯示當天的<b>收入（綠）、支出（紅）、合計</b>，已縮窄留更多空間給明細。'},
+    {scr:'book',hl:{top:'53%',left:'6%',w:'88%',h:'30%',label:'④ 當日明細，可上下滑',lt:'84%'},t:'下方是<b>當日每一筆記錄</b>，點任一筆可編輯或刪除。'},
+  ]},
+  {name:'記一筆',steps:[
+    {scr:'addbtn',hl:{top:'88%',left:'42%',w:'16%',h:'9%',label:'① 點底部中央 ＋',lt:'78%'},t:'在任何頁面點<b>底部中央的橘色 ＋</b> 開始記一筆。'},
+    {scr:'add',hl:{top:'6%',left:'26%',w:'46%',h:'7%',label:'① 切換 支出/收入/轉帳',lt:'15%'},t:'最上方切換<b>支出、收入、轉帳</b>三種類型。'},
+    {scr:'add',hl:{top:'16%',left:'6%',w:'88%',h:'11%',label:'② 用下方鍵盤輸入金額',lt:'28%'},t:'金額用<b>下方鍵盤</b>輸入，會即時顯示。'},
+    {scr:'add',hl:{top:'27%',left:'6%',w:'88%',h:'10%',label:'③ 點整列選 類別/帳戶/成員',lt:'38%'},t:'<b>類別、帳戶、成員</b>各點整列選擇。預設帶第一個帳戶與成員。'},
+    {scr:'add',hl:{top:'55%',left:'6%',w:'88%',h:'40%',label:'④ 莫蘭迪鍵盤',lt:'52%'},t:'輸入完按右上<b>儲存</b>即可。在記帳本先選日期再按＋，會自動帶入那天。'},
+  ]},
+  {name:'存款',steps:[
+    {scr:'bank',hl:{top:'24%',left:'6%',w:'88%',h:'22%',label:'① 存款帳戶（現金/銀行）',lt:'46%'},t:'帳戶分三區。<b>存款帳戶</b>=現金、銀行，計入總存款。'},
+    {scr:'bank',hl:{top:'72%',left:'6%',w:'88%',h:'14%',label:'② 投資帳戶（證券/理財）',lt:'68%'},t:'<b>投資帳戶</b>=證券戶、理財帳戶，閒置現金算投資。'},
+    {scr:'bank',hl:{top:'4%',left:'70%',w:'24%',h:'8%',label:'③ 右上「新增」加帳戶',lt:'13%',ll:'70%'},t:'點右上 <b>＋新增</b> 建立帳戶。'},
+    {scr:'bankadd',hl:{top:'30%',left:'6%',w:'88%',h:'15%',label:'④ 選帳戶性質',lt:'46%'},t:'選<b>帳戶性質</b>決定它歸哪一區。'},
+    {scr:'bankadd',hl:{top:'50%',left:'6%',w:'88%',h:'15%',label:'⑤ 信用卡預設不計入資產',lt:'66%'},t:'信用卡/借入會<b>自動設為不計入資產</b>（算負債）。'},
+  ]},
+  {name:'投資',steps:[
+    {scr:'invest',hl:{top:'8%',left:'6%',w:'88%',h:'22%',label:'① 投資總覽（市值+損益）',lt:'31%'},t:'上方<b>投資總覽</b>顯示總市值與未實現損益。'},
+    {scr:'invest',hl:{top:'10%',left:'52%',w:'40%',h:'8%',label:'② 按 ↻ 立即抓現價',lt:'19%',ll:'52%'},t:'股票/ETF 每日收盤自動更新。盤中想看即時價，按 <b>↻ 更新現價</b>。'},
+    {scr:'invest',hl:{top:'4%',left:'70%',w:'24%',h:'8%',label:'③ 右上「新增」加持倉',lt:'13%',ll:'70%'},t:'新增持倉會<b>自動從選定帳戶扣成本</b>，記得先把資金轉到證券戶。基金每月自行更新淨值。'},
+  ]},
+  {name:'設定',steps:[
+    {scr:'settings',hl:{top:'8%',left:'6%',w:'88%',h:'10%',label:'① 分類管理',lt:'18%'},t:'<b>分類管理</b>：自訂收入/支出分類與圖示。'},
+    {scr:'settings',hl:{top:'19%',left:'6%',w:'88%',h:'10%',label:'② 貸款管理',lt:'29%'},t:'<b>貸款管理</b>：新增貸款自動試算月繳與剩餘本金。'},
+    {scr:'loan',hl:{top:'30%',left:'6%',w:'88%',h:'14%',label:'貸款可選圖示',lt:'45%'},t:'貸款可選<b>圖示</b>，填本金、利率、期數即可。'},
+    {scr:'settings',hl:{top:'30%',left:'6%',w:'88%',h:'10%',label:'③ 週期支出/轉帳',lt:'40%'},t:'<b>週期支出</b>：固定支出或定期定額，每天自動記一筆。'},
+    {scr:'settings',hl:{top:'41%',left:'6%',w:'88%',h:'10%',label:'④ 成員管理',lt:'51%'},t:'<b>成員管理</b>：新增家人，記帳可指定花費歸屬。'},
+  ]},
+  {name:'分析',steps:[
+    {scr:'home',hl:{top:'4%',left:'62%',w:'12%',h:'8%',label:'① 主頁右上長條圖圖示進入',lt:'13%',ll:'62%'},t:'主頁右上的<b>長條圖圖示</b>進入統計分析。'},
+    {scr:'stats',hl:{top:'8%',left:'6%',w:'88%',h:'8%',label:'② 上方切換年/月',lt:'17%'},t:'上方切換<b>年/月</b>，看該月統計。'},
+    {scr:'stats',hl:{top:'17%',left:'6%',w:'88%',h:'9%',label:'③ 支出/收入/趨勢',lt:'27%'},t:'三大頁籤：<b>支出、收入、趨勢</b>。支出收入各有類別/帳戶/成員比圓餅圖。'},
+    {scr:'trend',hl:{top:'24%',left:'6%',w:'88%',h:'30%',label:'④ 近6月收支趨勢',lt:'55%'},t:'<b>趨勢</b>：近 6 月收入支出長條 + 淨額折線。'},
+  ]},
 ];
-function openTutorial(){ tutPage=0; renderTut(); }
+function openTutorial(){ tutSec=0; tutStep=0; renderTut(); }
 function renderTut(){
-  const p=TUT[tutPage];
-  const dots=TUT.map((_,i)=>`<span style="width:7px;height:7px;border-radius:50%;background:${i===tutPage?'var(--coral)':'rgba(58,44,42,.2)'}"></span>`).join('');
-  const steps=p.steps.map((s,i)=>`<div class="tstep"><span class="tnum">${i+1}</span><span>${s}</span></div>`).join('');
-  const html=`<div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">使用教學 ${tutPage+1}/${TUT.length}</div><span style="width:30px"></span></div>
-    <div class="mscroll" style="display:flex;flex-direction:column">
-      <div style="text-align:center;font-size:19px;font-weight:700;padding:6px 0 14px">${p.title}</div>
-      <div class="mockwrap">${MOCK[p.m]||''}</div>
-      <div style="padding:18px 22px 8px">${steps}</div>
-      <div style="display:flex;gap:7px;justify-content:center;padding:10px">${dots}</div>
-      <div style="display:flex;gap:10px;padding:0 22px 24px">
-        ${tutPage>0?`<button class="bigbtn" style="background:rgba(58,44,42,.08);color:var(--ink)" onclick="tutNav(-1)">‹ 上一頁</button>`:''}
-        ${tutPage<TUT.length-1?`<button class="bigbtn" onclick="tutNav(1)">下一頁 ›</button>`:`<button class="bigbtn" onclick="closeAllModal()">開始使用 ✓</button>`}
+  const sec=TUTSEC[tutSec], st=sec.steps[tutStep];
+  const totalSteps=sec.steps.length;
+  // 大項分頁
+  const tabs=TUTSEC.map((s,i)=>`<button class="ttabbtn ${i===tutSec?'on':''}" onclick="tutGo(${i},0)">${s.name}</button>`).join('');
+  // 子步驟圓點
+  const dots=sec.steps.map((_,i)=>`<span class="tdot ${i===tutStep?'on':''}"></span>`).join('');
+  const html=`<div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">使用教學</div><span style="width:30px"></span></div>
+    <div class="mscroll tutscroll">
+      <div class="ttabs">${tabs}</div>
+      <div class="tutmockwrap">${tutMock(SCR[st.scr], st.hl)}</div>
+      <div class="tutstepbox">
+        <div class="tutstepno">${tutSec+1}-${tutStep+1}</div>
+        <div class="tutsteptxt">${st.t}</div>
+      </div>
+      <div class="tdots">${dots}</div>
+      <div class="tutnav">
+        <button class="bigbtn ghost" ${(tutSec===0&&tutStep===0)?'disabled':''} onclick="tutPrev()">‹ 上一步</button>
+        ${(tutSec===TUTSEC.length-1&&tutStep===totalSteps-1)?`<button class="bigbtn" onclick="closeAllModal()">完成 ✓</button>`:`<button class="bigbtn" onclick="tutNext()">下一步 ›</button>`}
       </div>
     </div>`;
   const existing=document.querySelector('.modal.tutmodal');
   if(existing){ existing.innerHTML=html; }
   else { const m=openModal(html); m.classList.add('tutmodal'); }
 }
-function tutNav(dir){ tutPage+=dir; if(tutPage<0)tutPage=0; if(tutPage>TUT.length-1)tutPage=TUT.length-1; renderTut(); }
+function tutGo(s,st){ tutSec=s; tutStep=st; renderTut(); }
+function tutNext(){ const n=TUTSEC[tutSec].steps.length; if(tutStep<n-1)tutStep++; else if(tutSec<TUTSEC.length-1){tutSec++;tutStep=0;} renderTut(); }
+function tutPrev(){ if(tutStep>0)tutStep--; else if(tutSec>0){tutSec--;tutStep=TUTSEC[tutSec].steps.length-1;} renderTut(); }
 
 // ---------- 啟動 ----------
 const splashStart = Date.now();
