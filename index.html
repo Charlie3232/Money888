@@ -130,7 +130,8 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .mtop{flex-shrink:0;padding:max(16px,env(safe-area-inset-top)) 18px 12px;display:flex;align-items:center;justify-content:space-between}
 .mtop .x{font-size:24px;color:#b0a09a;cursor:pointer;background:none;border:none;width:30px}
 .mtop .t{font-size:18px;font-weight:700}
-.mtop .save{font-size:15px;font-weight:700;color:var(--coral);cursor:pointer;background:none;border:none;font-family:inherit}
+.mtop .save{font-size:14px;font-weight:800;color:#fff;cursor:pointer;background:var(--coral);border:2px solid var(--inkline);border-radius:20px;padding:6px 16px;font-family:inherit;box-shadow:2px 2px 0 var(--inkline);transition:transform .06s}
+.mtop .save:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--inkline)}
 .mscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 18px 30px;scrollbar-width:none}
 .mscroll::-webkit-scrollbar{display:none}
 .field{margin-bottom:16px}
@@ -800,7 +801,7 @@ function openLoans(){
     <div class="mscroll"><div class="card">${loans}</div></div>`);
 }
 let loanDraft;
-function openAddLoan(){ loanDraft={name:'',balance_input:'',rate:'2.25',payment_input:'',remain_input:'',due_date:'',anchor_date:todayStr(),account_id:DB.accounts[0]?.account_id||'',icon:'🏡'}; renderLoanEdit('新增貸款'); }
+function openAddLoan(){ loanDraft={name:'',balance_input:'',rate:'',payment_input:'',remain_input:'',due_date:'',anchor_date:todayStr(),account_id:DB.accounts[0]?.account_id||'',icon:'🏡'}; renderLoanEdit('新增貸款'); }
 function openEditLoan(id){ const l=DB.loans.find(x=>String(x.loan_id)===String(id)); if(!l)return; loanDraft={loan_id:l.loan_id,name:l.name,balance_input:String(l.balance_input||l.remainingBalance||''),rate:String(l.rate),payment_input:String(l.payment_input||l.monthlyPayment||''),remain_input:String(l.remain_input||l.remainingMonths||''),due_date:String(l.due_date||'').slice(0,10),anchor_date:String(l.anchor_date||todayStr()).slice(0,10),account_id:l.account_id,icon:l.icon||'🏡'}; renderLoanEdit('編輯貸款',true); }
 function renderLoanEdit(title,edit){
   const loanEmos=['🏡','🏠','🚗','💳','💰','🎓','🏢','🛠️','📄','🪙'];
@@ -811,7 +812,7 @@ function renderLoanEdit(title,edit){
       <div class="field"><label>圖示</label><div class="emojigrid" id="lEmo">${loanEmos.map(e=>`<span class="${loanDraft.icon===e?'sel':''}" onclick="loanDraft.icon='${e}';document.querySelectorAll('#lEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
       <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">填入目前帳單上的數字，系統會依此每月往後自動扣本金。</div>
       <div class="field"><label>目前剩餘本金</label><input class="inp" id="lBal" type="number" value="${loanDraft.balance_input}" placeholder="例如 9968964"></div>
-      <div class="field"><label>目前年利率 (%)</label><input class="inp" id="lR" type="number" step="0.001" value="${loanDraft.rate}"></div>
+      <div class="field"><label>目前年利率 (%)</label><input class="inp" id="lR" type="number" step="0.001" value="${loanDraft.rate}" placeholder="例如 2.25"></div>
       <div class="field"><label>每期應繳本息</label><input class="inp" id="lPay" type="number" value="${loanDraft.payment_input}" placeholder="例如 43157"></div>
       <div class="field"><label>剩餘期數 (月)</label><input class="inp" id="lRemain" type="number" value="${loanDraft.remain_input}" placeholder="例如 302"></div>
       <div class="field"><label>到期日</label><input class="inp" id="lDue" type="date" value="${loanDraft.due_date}"></div>
@@ -831,10 +832,11 @@ async function saveLoan(edit){
   };
   if(!p.name){ toast('請輸入名稱'); return; }
   if(!p.balance_input){ toast('請輸入剩餘本金'); return; }
+  toast('儲存中…');
   let res;
   if(edit){ p.loan_id=loanDraft.loan_id; res=await apiPost('updateLoan',{payload:p}); }
   else res=await apiPost('addLoan',{payload:p});
-  if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已儲存'); }
+  if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已儲存 ✓'); } else { toast('儲存失敗，請再試一次'); }
 }
 async function delLoan(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteLoan',{id}); if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已刪除'); } }
 
