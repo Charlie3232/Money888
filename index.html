@@ -25,11 +25,13 @@
   --herograd:linear-gradient(150deg,#43332e 0%,#2e211d 60%,#3a2a25 100%);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden}
+html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+body{position:fixed;inset:0;width:100%;overflow-x:hidden}
+input,select,textarea{max-width:100%}
 body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:var(--ink);
   display:flex;justify-content:center}
 .num,.amt{font-family:'Outfit',sans-serif}
-#app{width:100%;max-width:480px;height:100dvh;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
+#app{width:100%;max-width:480px;height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);overflow:hidden}
 
 /* 固定頂列 */
 .topbar{flex-shrink:0;padding:max(14px,env(safe-area-inset-top)) 20px 12px;display:flex;align-items:center;justify-content:space-between;background:var(--bg);z-index:5}
@@ -123,7 +125,7 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .mtop .x{font-size:24px;color:#b0a09a;cursor:pointer;background:none;border:none;width:30px}
 .mtop .t{font-size:18px;font-weight:700}
 .mtop .save{font-size:15px;font-weight:700;color:var(--coral);cursor:pointer;background:none;border:none;font-family:inherit}
-.mscroll{flex:1;overflow-y:auto;padding:6px 18px 30px;scrollbar-width:none}
+.mscroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 18px 30px;scrollbar-width:none}
 .mscroll::-webkit-scrollbar{display:none}
 .field{margin-bottom:16px}
 .field label{font-size:13px;font-weight:700;color:var(--sub);display:block;margin-bottom:7px}
@@ -233,13 +235,21 @@ async function apiGet(action){
   const r = await fetch(API_URL+'?action='+action);
   return await r.json();
 }
+let _posting = false;
 async function apiPost(action, extra){
-  const r = await fetch(API_URL, {
-    method:'POST',
-    body: JSON.stringify(Object.assign({action}, extra)),
-    headers:{'Content-Type':'text/plain;charset=utf-8'} // 避免 CORS preflight
-  });
-  return await r.json();
+  if(_posting){ return {ok:false, error:'busy'}; } // 防連點/重送
+  _posting = true;
+  try{
+    const r = await fetch(API_URL, {
+      method:'POST',
+      redirect:'follow',
+      body: JSON.stringify(Object.assign({action}, extra)),
+      headers:{'Content-Type':'text/plain;charset=utf-8'} // 避免 CORS preflight
+    });
+    return await r.json();
+  } finally {
+    _posting = false;
+  }
 }
 
 async function loadAll(){
@@ -399,9 +409,9 @@ function renderBank(){
   let donut='', off=0; const total=t.cash||1;
   const cols=['#c06b54','#d27a62','#e29a82','#a8857a','#8a766e','#6f8a6a'];
   depositAccs.forEach((a,i)=>{ if(String(a.exclude)==='true')return; const pct=(Number(a.balance)||0)/total*100; const dash=Math.max(0,pct)*2.51; donut+=`<circle cx="60" cy="60" r="40" fill="none" stroke="${cols[i%cols.length]}" stroke-width="16" stroke-dasharray="${dash} 251" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`; off+=dash; });
-  const rowHtml=a=>`<div class="lrow" onclick="openEditAccount('${a.account_id}')"><div class="ico">${a.icon||'🏦'}</div>
+  const rowHtml=a=>{ const bal=Number(a.balance)||0; return `<div class="lrow" onclick="openEditAccount('${a.account_id}')"><div class="ico">${a.icon||'🏦'}</div>
     <div class="nm">${esc(a.name)}<small>${TYPE_LABEL[a.type]||'未分類'}${(String(a.exclude)==='true')?' · 不計入':''}</small></div>
-    <div class="amt">${fmt(a.balance)}</div></div>`;
+    <div class="amt ${bal>=0?'green':'red'}">${fmt(bal)}</div></div>`; };
   const depList=depositAccs.map(rowHtml).join('')||'<div class="empty">尚無帳戶</div>';
   const invList=investAccs.length?investAccs.map(rowHtml).join(''):'';
   const debtList=debtAccs.length?debtAccs.map(rowHtml).join(''):'';
@@ -426,12 +436,12 @@ function renderInvest(){
     const up=h.pl>=0;
     return `<div class="lrow" onclick="openEditHolding('${h.holding_id}')"><div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
       <div class="nm">${esc(h.name)} <small>${esc(h.symbol)} · ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmt(h.avg_cost)} → 現 ${fmt(h.price)}</small></div>
-      <div style="text-align:right"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'green':'red'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
+      <div style="text-align:right"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'red':'green'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
   }).join('')||'<div class="empty">尚無持倉，點右上新增</div>';
   document.getElementById('page-invest').innerHTML=`
     <div class="card"><h3>投資總覽 <button class="save" style="font-size:13px" onclick="doRefresh()">↻ 更新現價</button></h3>
       <div style="display:flex;align-items:baseline;gap:10px"><div class="big" style="font-size:30px;font-family:Outfit;font-weight:700;color:var(--coral)">$${fmt(t.invest)}</div>
-      <div class="amt ${t.pl>=0?'green':'red'}" style="font-weight:700">未實現 ${t.pl>=0?'+':''}${plPct.toFixed(1)}%</div></div>
+      <div class="amt ${t.pl>=0?'red':'green'}" style="font-weight:700">未實現 ${t.pl>=0?'+':''}${plPct.toFixed(1)}%</div></div>
       <div class="grid5" style="margin-top:12px"><div class="mbox" style="grid-column:auto"><div class="l">股票</div><div class="v">${fmt(t.stock)}</div></div>
       <div class="mbox"><div class="l">ETF</div><div class="v">${fmt(t.etf)}</div></div></div>
       <div class="grid5" style="margin-top:8px"><div class="mbox" style="grid-column:1/3"><div class="l">基金</div><div class="v">${fmt(t.fund)}</div></div></div>
@@ -628,7 +638,7 @@ function openSettings(){
       <div class="setrow" onclick="openCategories()"><span class="e">🏷️</span>分類管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openLoans()"><span class="e">💳</span>貸款管理<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('帳戶請到存款頁右上新增')"><span class="e">🏦</span>帳戶管理<span class="ar">›</span></div>
-      <div class="setrow" onclick="toast('週期支出：直接在試算表編輯')"><span class="e">🔁</span>週期支出<span class="ar">›</span></div>
+      <div class="setrow" onclick="openRecurrings()"><span class="e">🔁</span>週期支出 / 轉帳<span class="ar">›</span></div>
       <div class="setrow" onclick="doRefresh()"><span class="e">☁️</span>立即同步抓價<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('我的資產 v1.0')"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
     </div>`);
@@ -710,6 +720,71 @@ async function saveLoan(edit){
   if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已儲存'); }
 }
 async function delLoan(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteLoan',{id}); if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已刪除'); } }
+
+// ========== 週期支出 / 轉帳 ==========
+const FREQ_LABEL={monthly:'每月',weekly:'每週',yearly:'每年'};
+function openRecurrings(){
+  const cm=catMap(), am=accMap();
+  const list=(DB.recurring||[]).map(r=>{
+    const isT=r.type==='transfer';
+    const desc=isT?`${FREQ_LABEL[r.frequency]||r.frequency} · ${esc((am[r.account_id]||{}).name||'')}→${esc((am[r.to_account_id]||{}).name||'')}`
+                  :`${FREQ_LABEL[r.frequency]||r.frequency} · ${esc((cm[r.category_id]||{}).name||'')} · 下次 ${String(r.next_date).slice(0,10)}`;
+    return `<div class="lrow" onclick="openEditRecurring('${r.recur_id}')"><div class="ico">${isT?'🔄':(cm[r.category_id]||{}).icon||'🔁'}</div>
+      <div class="nm">${esc(r.name)}<small>${desc}</small></div>
+      <div class="amt ${r.type==='income'?'green':'red'}">${r.type==='income'?'+':r.type==='transfer'?'':'−'}${fmt(r.amount)}</div></div>`;
+  }).join('')||'<div class="empty">尚無週期項目</div>';
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">週期支出 / 轉帳</div><button class="save" onclick="openAddRecurring()">＋</button></div>
+    <div class="mscroll"><div class="card">${list}</div>
+      <div style="font-size:12px;color:var(--sub);text-align:center;line-height:1.8">每日 00:15 自動執行到期項目<br>支援每月/每週/每年；轉帳會自動在兩帳戶間移動</div>
+    </div>`);
+  document.getElementById('topBack').style.display='flex';
+}
+let recDraft;
+function openAddRecurring(){ recDraft={name:'',type:'expense',account_id:DB.accounts[0]?.account_id||'',to_account_id:'',category_id:'',amount:'0',frequency:'monthly',next_date:todayStr(),active:true}; renderRecEdit('新增週期'); }
+function openEditRecurring(id){ const r=(DB.recurring||[]).find(x=>String(x.recur_id)===String(id)); if(!r)return; recDraft={recur_id:r.recur_id,name:r.name,type:r.type,account_id:r.account_id,to_account_id:r.to_account_id||'',category_id:r.category_id,amount:String(r.amount),frequency:r.frequency,next_date:String(r.next_date).slice(0,10),active:r.active}; renderRecEdit('編輯週期',true); }
+function renderRecEdit(title,edit){
+  const accs=DB.accounts.filter(a=>String(a.archived)!=='true');
+  const accOpts=sel=>accs.map(a=>`<option value="${a.account_id}" ${recDraft[sel]===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
+  const cats=DB.categories.filter(c=>c.type===recDraft.type&&String(c.archived)!=='true');
+  const catOpts=cats.map(c=>`<option value="${c.category_id}" ${recDraft.category_id===c.category_id?'selected':''}>${c.icon} ${esc(c.name)}</option>`).join('');
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveRec(${edit?true:false})">儲存</button></div>
+    <div class="mscroll">
+      <div class="field"><label>類型</label><div class="seg2">
+        <button class="${recDraft.type==='expense'?'on':''}" onclick="recSetType('expense')">支出</button>
+        <button class="${recDraft.type==='income'?'on':''}" onclick="recSetType('income')">收入</button>
+        <button class="${recDraft.type==='transfer'?'on':''}" onclick="recSetType('transfer')">轉帳</button></div></div>
+      <div class="field"><label>名稱</label><input class="inp" id="rName" value="${esc(recDraft.name)}" placeholder="例如：定期定額基金 / 房租"></div>
+      <div class="field"><label>金額</label><input class="inp" id="rAmt" type="number" value="${recDraft.amount}"></div>
+      <div class="field"><label>頻率</label><select class="inp" id="rFreq"><option value="monthly" ${recDraft.frequency==='monthly'?'selected':''}>每月</option><option value="weekly" ${recDraft.frequency==='weekly'?'selected':''}>每週</option><option value="yearly" ${recDraft.frequency==='yearly'?'selected':''}>每年</option></select></div>
+      <div class="field"><label>${recDraft.type==='transfer'?'轉出帳戶':'帳戶'}</label><select class="inp" id="rAcc">${accOpts('account_id')}</select></div>
+      <div class="field" id="rToField" style="${recDraft.type==='transfer'?'':'display:none'}"><label>轉入帳戶</label><select class="inp" id="rToAcc">${accOpts('to_account_id')}</select></div>
+      <div class="field" id="rCatField" style="${recDraft.type==='transfer'?'display:none':''}"><label>分類</label><select class="inp" id="rCat">${catOpts}</select></div>
+      <div class="field"><label>下次執行日</label><input class="inp" id="rNext" type="date" value="${recDraft.next_date}"></div>
+      ${edit?`<button class="bigbtn btn-danger" onclick="delRec('${recDraft.recur_id}')">刪除</button>`:''}
+    </div>`);
+  document.getElementById('topBack').style.display='flex';
+}
+function recSetType(t){ recDraft.type=t;
+  // 同步當前輸入值
+  recDraft.name=document.getElementById('rName').value; recDraft.amount=document.getElementById('rAmt').value;
+  closeModal(document.querySelectorAll('.modal')[document.querySelectorAll('.modal').length-1]); renderRecEdit(recDraft.recur_id?'編輯週期':'新增週期',!!recDraft.recur_id);
+}
+async function saveRec(edit){
+  const p={name:document.getElementById('rName').value.trim(),type:recDraft.type,amount:Number(document.getElementById('rAmt').value)||0,
+    frequency:document.getElementById('rFreq').value,account_id:document.getElementById('rAcc').value,
+    to_account_id:recDraft.type==='transfer'?document.getElementById('rToAcc').value:'',
+    category_id:recDraft.type==='transfer'?'':document.getElementById('rCat').value,
+    next_date:document.getElementById('rNext').value,active:true};
+  if(!p.name){ toast('請輸入名稱'); return; }
+  if(p.type==='transfer'&&p.account_id===p.to_account_id){ toast('轉出轉入不能同帳戶'); return; }
+  let res;
+  if(edit){ p.recur_id=recDraft.recur_id; res=await apiPost('updateRecurring',{payload:p}); }
+  else res=await apiPost('addRecurring',{payload:p});
+  if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已儲存'); }
+}
+async function delRec(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteRecurring',{id}); if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已刪除'); } }
 
 // ---------- 啟動 ----------
 const splashStart = Date.now();
