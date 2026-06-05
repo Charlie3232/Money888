@@ -83,6 +83,7 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .lrow .nm small{display:block;font-size:11px;color:var(--sub);font-weight:500;margin-top:1px}
 .lrow .amt{font-weight:700;font-size:16px;font-family:'Outfit'}
 .green{color:var(--green)}.red{color:var(--red)}
+.mbox .v.green{color:var(--green)}.mbox .v.red{color:var(--red)}
 .bar{height:7px;border-radius:6px;background:#ecdcd6;overflow:hidden;margin:7px 0 3px}
 .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--coral2),var(--coral3))}
 
@@ -146,10 +147,23 @@ select.inp{appearance:none}
 .btn-danger{background:none;color:var(--red);border:1.5px solid var(--red);margin-top:10px}
 
 /* keypad */
-.txnbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 18px 14px;scrollbar-width:none}
+.txnbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:0;scrollbar-width:none;min-height:0}
 .txnbody::-webkit-scrollbar{display:none}
-.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px 18px max(18px,env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);flex-shrink:0}
-.kp button{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px;font-size:21px;font-weight:700;font-family:'Outfit';cursor:pointer;color:var(--ink)}
+/* Moze 風緊湊單行欄位 */
+.trow{display:flex;align-items:center;gap:11px;padding:9px 18px;border-bottom:1px solid var(--line)}
+.trow .ti{width:24px;text-align:center;font-size:17px;flex-shrink:0}
+.trow .tl{font-size:16px;font-weight:700;color:var(--ink)}
+.trow .tv{margin-left:auto;font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;gap:6px}
+.trow .tv.ph{color:var(--sub);font-weight:500}
+.trow .tv .ar{color:#b0a09a;font-size:16px}
+.trow select.tv{border:none;background:none;font-family:inherit;text-align:right;direction:rtl;max-width:60%}
+.trow input.tv{border:none;background:none;font-family:inherit;text-align:right;width:60%}
+.trow input.tv:focus,.trow select.tv:focus{outline:none}
+.amtbig{font-size:25px;font-family:'Outfit';font-weight:700;color:var(--coral);text-align:right}
+.notebox{width:100%;border:none;background:none;font-family:inherit;font-size:14px;padding:8px 18px;color:var(--ink);resize:none}
+.notebox:focus{outline:none}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px 12px max(8px,env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);flex-shrink:0}
+.kp button{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px;font-size:18px;font-weight:700;font-family:'Outfit';cursor:pointer;color:var(--ink)}
 .amtdisplay{font-size:42px;font-family:'Outfit';font-weight:700;text-align:right;padding:6px 4px 14px;color:var(--coral)}
 .picker{display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,.85);border:1.5px solid rgba(58,44,42,.15);border-radius:12px;padding:13px 14px;font-size:15px;font-weight:700;cursor:pointer}
 .picker .ar{color:#b0a09a;font-size:18px}
@@ -336,16 +350,16 @@ function renderHome(){
     <div class="hero">
       <div class="label">淨資產 Net Worth</div>
       <div class="big">$${fmt(t.assets)}</div>
-      <div class="sub"><span class="up">↑ ${chg} 本月</span><span class="loan">負債 ${fmt(t.loan)}</span></div>
+      <div class="sub"><span class="up">↑ ${chg} 本月</span></div>
       <div class="trend">${spark}</div>
     </div>
     <div class="card"><h3>資產總覽</h3>
       <div class="grid5">
-        <div class="mbox"><div class="l">總資產</div><div class="v">${fmt(t.assets)}</div></div>
-        <div class="mbox" onclick="switchPage('bank')"><div class="l">總存款</div><div class="v">${fmt(t.cash)}</div></div>
-        <div class="mbox" onclick="switchPage('invest')"><div class="l">股票</div><div class="v">${fmt(t.stock)}</div></div>
-        <div class="mbox" onclick="switchPage('invest')"><div class="l">ETF</div><div class="v">${fmt(t.etf)}</div></div>
-        <div class="mbox" onclick="switchPage('invest')"><div class="l">基金</div><div class="v">${fmt(t.fund)}</div></div>
+        <div class="mbox"><div class="l">總資產</div><div class="v green">${fmt(t.assets)}</div></div>
+        <div class="mbox" onclick="switchPage('bank')"><div class="l">總存款</div><div class="v green">${fmt(t.cash)}</div></div>
+        <div class="mbox" onclick="switchPage('invest')"><div class="l">股票</div><div class="v green">${fmt(t.stock)}</div></div>
+        <div class="mbox" onclick="switchPage('invest')"><div class="l">ETF</div><div class="v green">${fmt(t.etf)}</div></div>
+        <div class="mbox" onclick="switchPage('invest')"><div class="l">基金</div><div class="v green">${fmt(t.fund)}</div></div>
       </div>
     </div>
     <div class="card"><h3>貸款餘額 <span class="red">${fmt(t.loan)}</span></h3>${loansHtml}</div>
@@ -427,7 +441,7 @@ function renderBank(){
   const debtList=debtAccs.length?debtAccs.map(rowHtml).join(''):'';
   document.getElementById('page-bank').innerHTML=`
     <div class="card"><h3>總存款</h3>
-      <div style="text-align:center"><div class="big" style="font-size:34px;font-family:Outfit;font-weight:700;color:var(--coral)">$${fmt(t.cash)}</div>
+      <div style="text-align:center"><div class="big" style="font-size:34px;font-family:Outfit;font-weight:700;color:${t.cash>=0?'var(--green)':'var(--red)'}">$${fmt(t.cash)}</div>
       <svg class="donut" viewBox="0 0 120 120">${donut}<circle cx="60" cy="60" r="32" fill="var(--bg)"/></svg></div>
     </div>
     <div class="card"><h3>存款帳戶</h3>${depList}</div>
@@ -503,7 +517,9 @@ function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeMo
 let txnDraft;
 function openAddTxn(){
   const dt = (curPage==='book') ? bookDate : todayStr();
-  txnDraft={type:'expense',amount:'0',category_id:'',account_id:DB.accounts[0]?.account_id||'',date:dt,note:'',member_id:''};
+  const firstAcc = DB.accounts.filter(a=>String(a.archived)!=='true')[0];
+  const firstMem = (DB.members||[]).filter(m=>String(m.archived)!=='true')[0];
+  txnDraft={type:'expense',amount:'0',category_id:'',account_id:firstAcc?firstAcc.account_id:'',date:dt,note:'',member_id:firstMem?firstMem.member_id:''};
   renderTxnModal('新增記帳');
 }
 function openEditTxn(id){
@@ -516,24 +532,25 @@ function renderTxnModal(title,edit){
   const selCatObj=cm[txnDraft.category_id];
   const accs=DB.accounts.filter(a=>String(a.archived)!=='true').map(a=>`<option value="${a.account_id}" ${txnDraft.account_id===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
   const members=(DB.members||[]).filter(x=>String(x.archived)!=='true');
-  const memOpts=`<option value="">（不指定）</option>`+members.map(mm=>`<option value="${mm.member_id}" ${txnDraft.member_id===mm.member_id?'selected':''}>${mm.icon||'👤'} ${esc(mm.name)}</option>`).join('');
+  const memOpts=members.map(mm=>`<option value="${mm.member_id}" ${txnDraft.member_id===mm.member_id?'selected':''}>${mm.icon||'👤'} ${esc(mm.name)}</option>`).join('');
   const m=openModal(`
-    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveTxn(${edit?true:false})">儲存</button></div>
-    <div class="txnbody">
-      <div class="seg2" style="margin-bottom:14px" id="txnSeg">
-        <button class="${txnDraft.type==='expense'?'on':''}" onclick="setTxnType('expense')">支出</button>
-        <button class="${txnDraft.type==='income'?'on':''}" onclick="setTxnType('income')">收入</button>
-        <button class="${txnDraft.type==='transfer'?'on':''}" onclick="setTxnType('transfer')">轉帳</button>
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button>
+      <div class="seg2" style="width:auto" id="txnSeg">
+        <button class="${txnDraft.type==='expense'?'on':''}" style="padding:7px 14px" onclick="setTxnType('expense')">支出</button>
+        <button class="${txnDraft.type==='income'?'on':''}" style="padding:7px 14px" onclick="setTxnType('income')">收入</button>
+        <button class="${txnDraft.type==='transfer'?'on':''}" style="padding:7px 14px" onclick="setTxnType('transfer')">轉帳</button>
       </div>
-      <div class="amtdisplay" id="amtDisp">${fmt(txnDraft.amount)}</div>
-      <div class="field" id="txnCatField" style="${txnDraft.type==='transfer'?'display:none':''}"><label>分類</label>
-        <div class="picker" onclick="openCatPicker()"><span id="catPickTxt">${selCatObj?(selCatObj.icon+' '+esc(selCatObj.name)):'點此選擇分類'}</span><span class="ar">›</span></div></div>
-      <div class="field"><label id="txnAccLabel">${txnDraft.type==='transfer'?'轉出帳戶':'帳戶'}</label><select class="inp" id="txnAcc" onchange="txnDraft.account_id=this.value">${accs}</select></div>
-      <div class="field" id="txnToAccField" style="${txnDraft.type==='transfer'?'':'display:none'}"><label>轉入帳戶</label><select class="inp" id="txnToAcc" onchange="txnDraft.to_account_id=this.value">${accs}</select></div>
-      ${members.length?`<div class="field" id="txnMemField" style="${txnDraft.type==='transfer'?'display:none':''}"><label>成員（歸屬於誰）</label><select class="inp" id="txnMem" onchange="txnDraft.member_id=this.value">${memOpts}</select></div>`:''}
-      <div class="field"><label>日期</label><input class="inp" type="date" id="txnDate" value="${dkey(txnDraft.date)}" onchange="txnDraft.date=this.value"></div>
-      <div class="field"><label>備註</label><input class="inp" id="txnNote" value="${esc(txnDraft.note)}" placeholder="選填" oninput="txnDraft.note=this.value"></div>
-      ${edit?`<button class="bigbtn btn-danger" onclick="delTxn('${txnDraft.txn_id}')">刪除這筆</button>`:''}
+      <button class="save" onclick="saveTxn(${edit?true:false})">儲存</button></div>
+    <div class="txnbody">
+      <div style="text-align:center;color:var(--sub);font-size:14px;font-weight:700;padding:6px 0 2px;font-size:13px">${dispDate(txnDraft.date)}</div>
+      <div class="trow"><span class="ti">💰</span><span class="tl">金額</span><span class="amtbig tv" id="amtDisp" style="margin-left:auto">${txnDraft.amount==='0'?'0':fmt(txnDraft.amount)}</span></div>
+      <div class="trow" id="txnCatRow" style="${txnDraft.type==='transfer'?'display:none':''}" onclick="openCatPicker()"><span class="ti">${selCatObj?selCatObj.icon:'🏷️'}</span><span class="tl">類別</span><span class="tv ${selCatObj?'':'ph'}" id="catPickTxt">${selCatObj?esc(selCatObj.name):'選擇'} <span class="ar">›</span></span></div>
+      <div class="trow"><span class="ti">👛</span><span class="tl" id="txnAccLabel">${txnDraft.type==='transfer'?'轉出':'帳戶'}</span><select class="tv" id="txnAcc" onchange="txnDraft.account_id=this.value">${accs}</select></div>
+      <div class="trow" id="txnToAccRow" style="${txnDraft.type==='transfer'?'':'display:none'}"><span class="ti">🎯</span><span class="tl">轉入</span><select class="tv" id="txnToAcc" onchange="txnDraft.to_account_id=this.value">${accs}</select></div>
+      ${members.length?`<div class="trow" id="txnMemRow" style="${txnDraft.type==='transfer'?'display:none':''}"><span class="ti">👤</span><span class="tl">成員</span><select class="tv" id="txnMem" onchange="txnDraft.member_id=this.value">${memOpts}</select></div>`:''}
+      <div class="trow"><span class="ti">📅</span><span class="tl">日期</span><input class="tv" type="date" id="txnDate" value="${dkey(txnDraft.date)}" onchange="txnDraft.date=this.value"></div>
+      <textarea class="notebox" id="txnNote" placeholder="寫點備註吧…" oninput="txnDraft.note=this.value" rows="1">${esc(txnDraft.note)}</textarea>
+      ${edit?`<div style="padding:0 18px"><button class="bigbtn btn-danger" onclick="delTxn('${txnDraft.txn_id}')">刪除這筆</button></div>`:''}
     </div>
     <div class="kp" id="txnKp">
       ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="kp('${n}')">${n}</button>`).join('')}
@@ -541,15 +558,16 @@ function renderTxnModal(title,edit){
     </div>`);
   document.getElementById('topBack').style.display='flex';
 }
+function dispDate(d){ const x=new Date(dkey(d)); if(isNaN(x))return dkey(d); const wd='日一二三四五六'[x.getDay()]; return `${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日 週${wd}`; }
 function setTxnType(t){
   txnDraft.type=t; txnDraft.category_id='';
   const seg=document.getElementById('txnSeg');
   seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on', b.textContent===(t==='expense'?'支出':t==='income'?'收入':'轉帳')));
-  const catField=document.getElementById('txnCatField'); if(catField) catField.style.display=(t==='transfer')?'none':'block';
-  const cp=document.getElementById('catPickTxt'); if(cp) cp.textContent='點此選擇分類';
-  const memF=document.getElementById('txnMemField'); if(memF) memF.style.display=(t==='transfer')?'none':'block';
-  document.getElementById('txnAccLabel').textContent=(t==='transfer')?'轉出帳戶':'帳戶';
-  document.getElementById('txnToAccField').style.display=(t==='transfer')?'block':'none';
+  const catRow=document.getElementById('txnCatRow'); if(catRow) catRow.style.display=(t==='transfer')?'none':'flex';
+  const cp=document.getElementById('catPickTxt'); if(cp){ cp.classList.add('ph'); cp.innerHTML='選擇 <span class="ar">›</span>'; }
+  const memR=document.getElementById('txnMemRow'); if(memR) memR.style.display=(t==='transfer')?'none':'flex';
+  const accLbl=document.getElementById('txnAccLabel'); if(accLbl) accLbl.textContent=(t==='transfer')?'轉出':'帳戶';
+  const toRow=document.getElementById('txnToAccRow'); if(toRow) toRow.style.display=(t==='transfer')?'flex':'none';
 }
 // 分類選擇頁（全頁）
 function openCatPicker(){
@@ -559,7 +577,7 @@ function openCatPicker(){
     <div class="mtop"><button class="x" onclick="closeTopModal()">‹ 返回</button><div class="t">選擇分類</div><span style="width:40px"></span></div>
     <div class="mscroll"><div class="cgrid">${grid}</div></div>`);
 }
-function pickCat(id,icon,name){ txnDraft.category_id=id; const el=document.getElementById('catPickTxt'); if(el) el.textContent=icon+' '+name; closeTopModal(); }
+function pickCat(id,icon,name){ txnDraft.category_id=id; const el=document.getElementById('catPickTxt'); if(el){ el.classList.remove('ph'); el.innerHTML=esc(name)+' <span class="ar">›</span>'; } const row=document.getElementById('txnCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; } closeTopModal(); }
 function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
 function kp(k){ let a=txnDraft.amount; if(k==='c')a='0'; else if(k==='b')a=a.length>1?a.slice(0,-1):'0'; else { a=(a==='0')?k:a+k; } txnDraft.amount=a; document.getElementById('amtDisp').textContent=fmt(a); }
 async function saveTxn(edit){
