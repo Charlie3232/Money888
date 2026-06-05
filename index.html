@@ -18,11 +18,11 @@
 @font-face{font-family:'GenSenRound';src:url('https://cdn.jsdelivr.net/gh/max32002/GenSenRounded-webfont@1.0/webfont/GenSenRounded-TC/GenSenRoundedTC-Medium.woff2') format('woff2');font-weight:500;font-display:swap}
 @font-face{font-family:'GenSenRound';src:url('https://cdn.jsdelivr.net/gh/max32002/GenSenRounded-webfont@1.0/webfont/GenSenRounded-TC/GenSenRoundedTC-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
 :root{
-  --bg:#f6efec; --ink:#3a2c2a; --sub:#8a766e; --line:rgba(58,44,42,.08);
-  --coral:#c06b54; --coral2:#d27a62; --coral3:#e29a82;
-  --green:#6f8a6a; --red:#c06b54;
-  --card:rgba(255,255,255,.7); --cardgrad:linear-gradient(160deg,#fdf8f6 0%,#f4ebe7 100%);
-  --herograd:linear-gradient(150deg,#43332e 0%,#2e211d 60%,#3a2a25 100%);
+  --bg:#eef0ea; --ink:#22281e; --sub:#7e8472; --line:rgba(34,40,30,.08);
+  --coral:#b08a3a; --coral2:#c09a48; --coral3:#d4b46a;
+  --green:#5a8a4e; --red:#b0553a;
+  --card:rgba(255,255,255,.7); --cardgrad:linear-gradient(160deg,#f8faf4 0%,#eef1e8 100%);
+  --herograd:linear-gradient(150deg,#2d352a 0%,#1a1f16 60%,#252e1e 100%);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
@@ -46,11 +46,11 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .scroll::-webkit-scrollbar{display:none}
 
 /* 固定底部 Tab */
-.tabbar{flex-shrink:0;display:flex;justify-content:space-around;align-items:center;padding:10px 8px max(22px,env(safe-area-inset-bottom));background:var(--bg);border-top:1.5px solid var(--ink)}
+.tabbar{flex-shrink:0;display:flex;justify-content:space-around;align-items:center;padding:10px 8px max(22px,env(safe-area-inset-bottom));background:var(--bg);border-top:1.5px solid var(--ink);position:relative;z-index:6}
 .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;opacity:.34;cursor:pointer;border:none;background:none;color:var(--ink);font-family:inherit}
 .tab.on{opacity:1;color:var(--coral)}
 .tab svg{width:23px;height:23px;stroke:currentColor;fill:none}
-.addbtn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--coral3),var(--coral2));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(210,122,98,.4);margin-top:-20px;cursor:pointer;border:none}
+.addbtn{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--coral3),var(--coral2));display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(210,122,98,.4);margin-top:-20px;cursor:pointer;border:none;position:relative;z-index:7}
 .addbtn svg{width:26px;height:26px;stroke:#fff;fill:none}
 
 /* 卡片 */
@@ -59,11 +59,11 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 
 /* 淨資產主卡 */
 .hero{background:var(--herograd);color:#f4e9e4;border-radius:26px;padding:24px 22px;margin-bottom:14px;box-shadow:0 14px 34px rgba(58,44,42,.26),inset 0 1px 0 rgba(255,255,255,.07);position:relative;overflow:hidden}
-.hero .label{font-size:13px;font-weight:700;letter-spacing:.5px;color:#b09a92}
-.hero .big{font-size:44px;font-weight:700;letter-spacing:-1px;margin-top:8px;line-height:1.05;color:#f0b8a6;font-family:'Outfit'}
+.hero .label{font-size:13px;font-weight:700;letter-spacing:.5px;color:#9aa085}
+.hero .big{font-size:44px;font-weight:700;letter-spacing:-1px;margin-top:8px;line-height:1.05;color:#e8d09a;font-family:'Outfit'}
 .hero .sub{display:flex;gap:12px;margin-top:14px;font-size:12px;font-weight:700}
 .hero .sub span{padding:5px 11px;border-radius:20px}
-.hero .sub .up{background:linear-gradient(135deg,var(--coral3),var(--coral2));color:#2e1c18}
+.hero .sub .up{background:linear-gradient(135deg,#8fb89a,#6f8a6a);color:#1e2e22}
 .hero .sub .loan{background:rgba(255,255,255,.1);color:#d9c4bd}
 .trend{height:64px;margin-top:14px;position:relative}
 .trend svg{width:100%;height:100%}
@@ -78,13 +78,13 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 /* 列表通用 */
 .lrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .lrow:last-child{border:none}
-.lrow .ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,#f3e6e1,#ebd9d2);box-shadow:inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.lrow .ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(150deg,#e8ece0,#dde2d4);box-shadow:inset 0 1px 0 #fff;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .lrow .nm{flex:1;font-weight:700;font-size:15px}
 .lrow .nm small{display:block;font-size:11px;color:var(--sub);font-weight:500;margin-top:1px}
 .lrow .amt{font-weight:700;font-size:16px;font-family:'Outfit'}
 .green{color:var(--green)}.red{color:var(--red)}
 .mbox .v.green{color:var(--green)}.mbox .v.red{color:var(--red)}
-.bar{height:7px;border-radius:6px;background:#ecdcd6;overflow:hidden;margin:7px 0 3px}
+.bar{height:7px;border-radius:6px;background:#dde2d4;overflow:hidden;margin:7px 0 3px}
 .bar i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--coral2),var(--coral3))}
 
 /* 記帳本 */
@@ -138,7 +138,7 @@ select.inp{appearance:none}
 .seg2 button.on{background:#fff;color:var(--ink)}
 .emojigrid{display:grid;grid-template-columns:repeat(7,1fr);gap:7px}
 .emojigrid span{aspect-ratio:1;background:rgba(255,255,255,.7);border:1.5px solid transparent;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer}
-.emojigrid span.sel{border-color:var(--coral);background:#fbeae4}
+.emojigrid span.sel{border-color:var(--coral);background:#eef2e4}
 .cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
 .cbox{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;position:relative}
 .cbox .e{font-size:25px}.cbox .t{font-size:12px;font-weight:700;text-align:center}
@@ -165,15 +165,15 @@ select.inp{appearance:none}
 .notebox{width:100%;border:none;background:none;font-family:inherit;font-size:14px;padding:8px 18px;color:var(--ink);resize:none}
 .notebox:focus{outline:none}
 /* 鍵盤：莫蘭迪夢幻漸層 */
-.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:9px 14px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,#f0e3e0,#ecdcd6);border-top:1px solid rgba(192,107,84,.15);flex-shrink:0}
-.kp button{background:linear-gradient(160deg,#fdf6f4,#f6e8e3);border:1px solid rgba(192,107,84,.12);border-radius:14px;padding:13px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:#6b4a42;box-shadow:0 2px 6px rgba(192,107,84,.08),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .06s}
-.kp button:active{transform:scale(.94);background:linear-gradient(160deg,#f3e0da,#ecd2ca)}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:9px 14px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,#e6ebdf,#dde3d3);border-top:1px solid rgba(176,138,58,.15);flex-shrink:0}
+.kp button{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:14px;padding:13px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:#4a5238;box-shadow:0 2px 6px rgba(176,138,58,.08),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .06s}
+.kp button:active{transform:scale(.94);background:linear-gradient(160deg,#e8efe0,#dde6d0)}
 /* 教學模擬畫面 */
 .mockwrap{display:flex;justify-content:center;padding:8px 22px}
 .mock{width:230px;background:#f6efec;border:6px solid #2e211d;border-radius:26px;padding:12px 10px;display:flex;flex-direction:column;gap:7px;box-shadow:0 10px 30px rgba(58,44,42,.2)}
-.mock .mhero{background:linear-gradient(150deg,#43332e,#2e211d);border-radius:14px;padding:12px;color:#f0b8a6}
-.mock .ml{font-size:9px;color:#b09a92;font-weight:700}
-.mock .mbig{font-size:20px;font-weight:700;font-family:'Outfit';color:#f0b8a6}
+.mock .mhero{background:linear-gradient(150deg,#2d352a,#1a1f16);border-radius:14px;padding:12px;color:#e8d09a}
+.mock .ml{font-size:9px;color:#9aa085;font-weight:700}
+.mock .mbig{font-size:20px;font-weight:700;font-family:'Outfit';color:#e8d09a}
 .mock .mup{font-size:9px;color:#e8b4a0;margin-top:3px}
 .mock .mcard,.mock .mcardh{font-size:10px}
 .mock .mcardh{font-weight:700;color:var(--sub);margin-top:4px}
@@ -185,10 +185,10 @@ select.inp{appearance:none}
 .mock .mseg span.on{background:#fff;color:var(--ink)}
 .mock .mrow{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;padding:6px 4px;border-bottom:1px solid rgba(58,44,42,.06)}
 .mock .mmeta{font-size:9px;color:var(--sub);padding:1px 4px}
-.mock .mbar{height:6px;background:#ecdcd6;border-radius:4px;overflow:hidden;margin:3px 4px}
+.mock .mbar{height:6px;background:#dde2d4;border-radius:4px;overflow:hidden;margin:3px 4px}
 .mock .mbar i{display:block;height:100%;background:linear-gradient(90deg,#d27a62,#e29a82)}
 .mock .mkp{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:4px}
-.mock .mkp i{background:linear-gradient(160deg,#fdf6f4,#f6e8e3);border:1px solid rgba(192,107,84,.12);border-radius:8px;padding:7px;text-align:center;font-size:13px;font-weight:700;font-family:'Outfit';color:#6b4a42;font-style:normal}
+.mock .mkp i{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:8px;padding:7px;text-align:center;font-size:13px;font-weight:700;font-family:'Outfit';color:#4a5238;font-style:normal}
 .mock .mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .mock .mcal i{aspect-ratio:1;background:rgba(58,44,42,.05);border-radius:5px;font-size:9px;display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:700;position:relative}
 .mock .mcal i.on{background:#c06b54;color:#fff}
@@ -376,7 +376,7 @@ function renderHome(){
   if(snaps.length>1){ const a=Number(snaps[snaps.length-2].total_assets)||0, b=Number(snaps[snaps.length-1].total_assets)||0; if(a>0)chg=((b-a)/a*100).toFixed(1)+'%'; }
 
   let loansHtml = DB.loans.filter(l=>String(l.active)!=='false').map(l=>`
-    <div class="lrow"><div class="ico">💳</div>
+    <div class="lrow"><div class="ico">${l.icon||'💳'}</div>
       <div class="nm">${esc(l.name)}<small>利率 ${l.rate}% · 月繳 ${fmt(l.monthlyPayment)} · 剩 ${l.remainingMonths} 期</small></div>
       <div class="amt red">${fmt(l.remainingBalance)}</div></div>`).join('') || '<div class="empty">無貸款</div>';
 
@@ -760,7 +760,7 @@ async function delCat(id){ if(!confirm('確定刪除？'))return; const res=awai
 
 // 貸款管理
 function openLoans(){
-  const loans=DB.loans.map(l=>`<div class="lrow" onclick="openEditLoan('${l.loan_id}')"><div class="ico">💳</div>
+  const loans=DB.loans.map(l=>`<div class="lrow" onclick="openEditLoan('${l.loan_id}')"><div class="ico">${l.icon||'💳'}</div>
     <div class="nm">${esc(l.name)}<small>利率 ${l.rate}% · 月繳 ${fmt(l.monthlyPayment)} · 剩 ${l.remainingMonths} 期</small></div>
     <div class="amt red">${fmt(l.remainingBalance)}</div></div>`).join('')||'<div class="empty">尚無貸款</div>';
   const m=openModal(`
@@ -768,13 +768,15 @@ function openLoans(){
     <div class="mscroll"><div class="card">${loans}</div></div>`);
 }
 let loanDraft;
-function openAddLoan(){ loanDraft={name:'',principal:'0',rate:'2',term_months:'240',start_date:todayStr(),account_id:DB.accounts[0]?.account_id||''}; renderLoanEdit('新增貸款'); }
-function openEditLoan(id){ const l=DB.loans.find(x=>String(x.loan_id)===String(id)); if(!l)return; loanDraft={loan_id:l.loan_id,name:l.name,principal:String(l.principal),rate:String(l.rate),term_months:String(l.term_months),start_date:String(l.start_date).slice(0,10),account_id:l.account_id}; renderLoanEdit('編輯貸款',true); }
+function openAddLoan(){ loanDraft={name:'',principal:'0',rate:'2',term_months:'240',start_date:todayStr(),account_id:DB.accounts[0]?.account_id||'',icon:'🏡'}; renderLoanEdit('新增貸款'); }
+function openEditLoan(id){ const l=DB.loans.find(x=>String(x.loan_id)===String(id)); if(!l)return; loanDraft={loan_id:l.loan_id,name:l.name,principal:String(l.principal),rate:String(l.rate),term_months:String(l.term_months),start_date:String(l.start_date).slice(0,10),account_id:l.account_id,icon:l.icon||'🏡'}; renderLoanEdit('編輯貸款',true); }
 function renderLoanEdit(title,edit){
+  const loanEmos=['🏡','🏠','🚗','💳','💰','🎓','🏢','🛠️','📄','🪙'];
   const m=openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">${title}</div><button class="save" onclick="saveLoan(${edit?true:false})">儲存</button></div>
     <div class="mscroll">
       <div class="field"><label>名稱</label><input class="inp" id="lName" value="${esc(loanDraft.name)}" placeholder="例如：房屋貸款"></div>
+      <div class="field"><label>圖示</label><div class="emojigrid" id="lEmo">${loanEmos.map(e=>`<span class="${loanDraft.icon===e?'sel':''}" onclick="loanDraft.icon='${e}';document.querySelectorAll('#lEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
       <div class="field"><label>貸款總額 (本金)</label><input class="inp" id="lP" type="number" value="${loanDraft.principal}"></div>
       <div class="field"><label>年利率 (%)</label><input class="inp" id="lR" type="number" step="0.01" value="${loanDraft.rate}"></div>
       <div class="field"><label>期數 (月)</label><input class="inp" id="lN" type="number" value="${loanDraft.term_months}"></div>
@@ -783,7 +785,7 @@ function renderLoanEdit(title,edit){
     </div>`);
 }
 async function saveLoan(edit){
-  const p={name:document.getElementById('lName').value.trim(),principal:Number(document.getElementById('lP').value)||0,rate:Number(document.getElementById('lR').value)||0,term_months:Number(document.getElementById('lN').value)||0,start_date:document.getElementById('lD').value,extra_payment:0,active:true};
+  const p={name:document.getElementById('lName').value.trim(),principal:Number(document.getElementById('lP').value)||0,rate:Number(document.getElementById('lR').value)||0,term_months:Number(document.getElementById('lN').value)||0,start_date:document.getElementById('lD').value,icon:loanDraft.icon,extra_payment:0,active:true};
   if(!p.name){ toast('請輸入名稱'); return; }
   let res;
   if(edit){ p.loan_id=loanDraft.loan_id; res=await apiPost('updateLoan',{payload:p}); }
@@ -964,13 +966,23 @@ function renderTrend(){
   // 折線：淨收支，範圍含負值
   const nets=data.map(d=>d.net);
   const nmax=Math.max(1,...nets), nmin=Math.min(0,...nets), nrng=(nmax-nmin)||1;
-  const H=140, W=300, n=data.length;
-  const px=i=>(n>1?(i/(n-1)):0.5)*(W-40)+20;
+  const H=150, W=320, n=data.length, LEFT=40;
+  const px=i=>LEFT+(n>1?(i/(n-1)):0.5)*(W-LEFT-16);
   const py=v=>H-8-((v-nmin)/nrng*(H-24));
   const linePts=nets.map((v,i)=>`${px(i).toFixed(1)},${py(v).toFixed(1)}`).join(' ');
-  const dots=nets.map((v,i)=>`<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="4" fill="#3a2c2a"/>`).join('');
+  const dots=nets.map((v,i)=>`<circle cx="${px(i).toFixed(1)}" cy="${py(v).toFixed(1)}" r="4" fill="var(--ink)"/>`).join('');
+  // Y 軸刻度（依 max 分 4 段，取整到漂亮數字）
+  function niceNum(x){ if(x<=0)return 0; const e=Math.pow(10,Math.floor(Math.log10(x))); const f=x/e; const nf=f<1.5?1:f<3?2:f<7?5:10; return nf*e; }
+  const step=niceNum(max/4)||1; const top=Math.ceil(max/step)*step;
+  let yaxis=''; let grid='';
+  for(let v=0; v<=top+0.5; v+=step){
+    const yy=(H-8-(v/max*(H-24))).toFixed(1);
+    const lbl=v>=10000?(v/10000)+'萬':v>=1000?(v/1000)+'K':v;
+    yaxis+=`<text x="${LEFT-5}" y="${(+yy+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#a8968e" font-family="Outfit">${lbl}</text>`;
+    grid+=`<line x1="${LEFT}" y1="${yy}" x2="${W-4}" y2="${yy}" stroke="rgba(58,44,42,.07)" stroke-width="1"/>`;
+  }
   // 長條
-  const bw=(W-40)/n*0.5;
+  const bw=(W-LEFT-16)/n*0.42;
   const bars=data.map((d,i)=>{
     const cx=px(i);
     const ih=d.inc/max*(H-24), eh=d.exp/max*(H-24);
@@ -984,8 +996,9 @@ function renderTrend(){
 
   return `<div class="card"><h3>近 6 個月收支趨勢</h3>
     <svg viewBox="0 0 ${W} ${H+20}" style="width:100%">
+      ${grid}${yaxis}
       ${bars}
-      <polyline points="${linePts}" fill="none" stroke="#3a2c2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="${linePts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       ${dots}
       ${labels}
     </svg>
