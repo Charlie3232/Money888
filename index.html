@@ -800,8 +800,8 @@ function openLoans(){
     <div class="mscroll"><div class="card">${loans}</div></div>`);
 }
 let loanDraft;
-function openAddLoan(){ loanDraft={name:'',principal:'0',rate:'2',term_months:'240',start_date:todayStr(),account_id:DB.accounts[0]?.account_id||'',icon:'🏡'}; renderLoanEdit('新增貸款'); }
-function openEditLoan(id){ const l=DB.loans.find(x=>String(x.loan_id)===String(id)); if(!l)return; loanDraft={loan_id:l.loan_id,name:l.name,principal:String(l.principal),rate:String(l.rate),term_months:String(l.term_months),start_date:String(l.start_date).slice(0,10),account_id:l.account_id,icon:l.icon||'🏡'}; renderLoanEdit('編輯貸款',true); }
+function openAddLoan(){ loanDraft={name:'',balance_input:'',rate:'2.25',payment_input:'',remain_input:'',due_date:'',anchor_date:todayStr(),account_id:DB.accounts[0]?.account_id||'',icon:'🏡'}; renderLoanEdit('新增貸款'); }
+function openEditLoan(id){ const l=DB.loans.find(x=>String(x.loan_id)===String(id)); if(!l)return; loanDraft={loan_id:l.loan_id,name:l.name,balance_input:String(l.balance_input||l.remainingBalance||''),rate:String(l.rate),payment_input:String(l.payment_input||l.monthlyPayment||''),remain_input:String(l.remain_input||l.remainingMonths||''),due_date:String(l.due_date||'').slice(0,10),anchor_date:String(l.anchor_date||todayStr()).slice(0,10),account_id:l.account_id,icon:l.icon||'🏡'}; renderLoanEdit('編輯貸款',true); }
 function renderLoanEdit(title,edit){
   const loanEmos=['🏡','🏠','🚗','💳','💰','🎓','🏢','🛠️','📄','🪙'];
   const m=openModal(`
@@ -809,16 +809,28 @@ function renderLoanEdit(title,edit){
     <div class="mscroll">
       <div class="field"><label>名稱</label><input class="inp" id="lName" value="${esc(loanDraft.name)}" placeholder="例如：房屋貸款"></div>
       <div class="field"><label>圖示</label><div class="emojigrid" id="lEmo">${loanEmos.map(e=>`<span class="${loanDraft.icon===e?'sel':''}" onclick="loanDraft.icon='${e}';document.querySelectorAll('#lEmo span').forEach(s=>s.classList.remove('sel'));this.classList.add('sel')">${e}</span>`).join('')}</div></div>
-      <div class="field"><label>貸款總額 (本金)</label><input class="inp" id="lP" type="number" value="${loanDraft.principal}"></div>
-      <div class="field"><label>年利率 (%)</label><input class="inp" id="lR" type="number" step="0.01" value="${loanDraft.rate}"></div>
-      <div class="field"><label>期數 (月)</label><input class="inp" id="lN" type="number" value="${loanDraft.term_months}"></div>
-      <div class="field"><label>起始日</label><input class="inp" id="lD" type="date" value="${loanDraft.start_date}"></div>
+      <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">填入目前帳單上的數字，系統會依此每月往後自動扣本金。</div>
+      <div class="field"><label>目前剩餘本金</label><input class="inp" id="lBal" type="number" value="${loanDraft.balance_input}" placeholder="例如 9968964"></div>
+      <div class="field"><label>目前年利率 (%)</label><input class="inp" id="lR" type="number" step="0.001" value="${loanDraft.rate}"></div>
+      <div class="field"><label>每期應繳本息</label><input class="inp" id="lPay" type="number" value="${loanDraft.payment_input}" placeholder="例如 43157"></div>
+      <div class="field"><label>剩餘期數 (月)</label><input class="inp" id="lRemain" type="number" value="${loanDraft.remain_input}" placeholder="例如 302"></div>
+      <div class="field"><label>到期日</label><input class="inp" id="lDue" type="date" value="${loanDraft.due_date}"></div>
       ${edit?`<button class="bigbtn btn-danger" onclick="delLoan('${loanDraft.loan_id}')">刪除</button>`:''}
     </div>`);
 }
 async function saveLoan(edit){
-  const p={name:document.getElementById('lName').value.trim(),principal:Number(document.getElementById('lP').value)||0,rate:Number(document.getElementById('lR').value)||0,term_months:Number(document.getElementById('lN').value)||0,start_date:document.getElementById('lD').value,icon:loanDraft.icon,extra_payment:0,active:true};
+  const p={
+    name:document.getElementById('lName').value.trim(),
+    balance_input:Number(document.getElementById('lBal').value)||0,
+    rate:Number(document.getElementById('lR').value)||0,
+    payment_input:Number(document.getElementById('lPay').value)||0,
+    remain_input:Number(document.getElementById('lRemain').value)||0,
+    due_date:document.getElementById('lDue').value,
+    anchor_date:edit?(loanDraft.anchor_date||todayStr()):todayStr(),
+    icon:loanDraft.icon, active:true
+  };
   if(!p.name){ toast('請輸入名稱'); return; }
+  if(!p.balance_input){ toast('請輸入剩餘本金'); return; }
   let res;
   if(edit){ p.loan_id=loanDraft.loan_id; res=await apiPost('updateLoan',{payload:p}); }
   else res=await apiPost('addLoan',{payload:p});
