@@ -26,6 +26,7 @@
   --inkline:#2a1a2e;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+button,.tab,.mbox,.setrow,.lrow,.cbox,.emojigrid span,.seg2 button,.segtab button{touch-action:manipulation}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none}
 body{position:fixed;inset:0;width:100%;overflow-x:hidden}
 input,select,textarea{max-width:100%}
@@ -125,7 +126,10 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg);color:va
 .setrow .e{font-size:19px}.setrow .ar{margin-left:auto;color:#b0a09a;font-size:18px}
 
 /* 全頁彈窗 */
-.modal{position:absolute;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;opacity:0;transition:opacity .15s ease;visibility:hidden}
+.modal{position:absolute;inset:0;background:var(--bg);z-index:30;display:flex;flex-direction:column;opacity:0;transition:opacity .15s ease,transform .25s cubic-bezier(.34,1.1,.6,1);visibility:hidden}
+.modal.anim-up{transform:translateY(100%)}
+.modal.anim-right{transform:translateX(100%)}
+.modal.show{opacity:1;visibility:visible;transform:none}
 .modal.show{opacity:1;visibility:visible}
 .mtop{flex-shrink:0;padding:max(16px,env(safe-area-inset-top)) 18px 12px;display:flex;align-items:center;justify-content:space-between}
 .mtop .x{font-size:24px;color:#b0a09a;cursor:pointer;background:none;border:none;width:30px}
@@ -172,7 +176,7 @@ select.inp{appearance:none}
 .notebox:focus{outline:none}
 /* 鍵盤：莫蘭迪夢幻漸層 */
 .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:9px 14px max(12px,env(safe-area-inset-bottom));background:linear-gradient(180deg,#e6ebdf,#dde3d3);border-top:1px solid rgba(176,138,58,.15);flex-shrink:0}
-.kp button{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:14px;padding:13px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:#4a5238;box-shadow:0 2px 6px rgba(176,138,58,.08),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .06s}
+.kp button{background:linear-gradient(160deg,#f8faf2,#eef2e6);border:1px solid rgba(176,138,58,.12);border-radius:14px;padding:13px;font-size:20px;font-weight:700;font-family:'Outfit';cursor:pointer;color:#4a5238;box-shadow:0 2px 6px rgba(176,138,58,.08),inset 0 1px 0 rgba(255,255,255,.7);touch-action:manipulation;user-select:none}
 .kp button:active{transform:scale(.94);background:linear-gradient(160deg,#e8efe0,#dde6d0)}
 /* 使用教學：完整畫面 + 高亮指示 */
 .tutscroll{display:flex;flex-direction:column;padding:0}
@@ -241,6 +245,9 @@ select.inp{appearance:none}
 .loading{position:absolute;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;z-index:99}
 .spinner{width:38px;height:38px;border:3px solid rgba(192,107,84,.2);border-top-color:var(--coral);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.savingmask{position:absolute;inset:0;background:rgba(42,26,46,.35);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:opacity .15s}
+.savingmask.show{opacity:1;visibility:visible}
+.savingbox{background:#fff;border:2.5px solid var(--inkline);border-radius:18px;box-shadow:4px 4px 0 var(--inkline);padding:24px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;font-weight:700;font-size:14px}
 .toast{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 20px;border-radius:22px;font-size:14px;font-weight:700;z-index:90;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 .empty{text-align:center;color:var(--sub);font-size:13px;padding:30px 0}
@@ -254,6 +261,10 @@ select.inp{appearance:none}
 #splash .foot{position:absolute;bottom:max(46px,env(safe-area-inset-bottom));color:rgba(248,232,200,.6);font-size:13px;font-weight:500;animation:splashfade .8s ease .4s both}
 @keyframes splashpop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes splashfade{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+.splashload{display:flex;gap:8px;margin-top:6px;animation:splashfade .8s ease .3s both}
+.splashdot{width:9px;height:9px;border-radius:50%;background:#f8e8c8;opacity:.5;animation:splashdot 1s ease-in-out infinite}
+.splashdot:nth-child(2){animation-delay:.2s}.splashdot:nth-child(3){animation-delay:.4s}
+@keyframes splashdot{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
 </style>
 </head>
 <body>
@@ -299,7 +310,8 @@ select.inp{appearance:none}
 <div id="splash">
   <img class="logo" src="icon-192.png" alt="">
   <div class="title">查理的記帳APP</div>
-  <div class="foot">財神保佑・記帳理財</div>
+  <div class="splashload"><div class="splashdot"></div><div class="splashdot"></div><div class="splashdot"></div></div>
+  <div class="foot" id="splashFoot">財神保佑・載入中…</div>
 </div>
 
 <script>
@@ -596,15 +608,15 @@ function switchPage(p){
 function onTopAdd(){ if(curPage==='bank')openAddAccount(); else if(curPage==='invest')openAddHolding(); }
 
 // ========== 全頁彈窗框架 ==========
-function openModal(html){
+function openModal(html, anim){
   const host=document.getElementById('modalHost');
   const div=document.createElement('div');
-  div.className='modal'; div.innerHTML=html;
+  div.className='modal'+(anim?(' anim-'+anim):''); div.innerHTML=html;
   host.appendChild(div);
   requestAnimationFrame(()=>div.classList.add('show'));
   return div;
 }
-function closeModal(el){ el.classList.remove('show'); setTimeout(()=>el.remove(),300); }
+function closeModal(el){ el.classList.remove('show'); el.style.pointerEvents='none'; setTimeout(()=>el.remove(),280); }
 function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeModal(m)); }
 
 // ========== 記帳表單 ==========
@@ -647,9 +659,9 @@ function renderTxnModal(title,edit){
       ${edit?`<div style="padding:0 18px"><button class="bigbtn btn-danger" onclick="delTxn('${txnDraft.txn_id}')">刪除這筆</button></div>`:''}
     </div>
     <div class="kp" id="txnKp">
-      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button onclick="kp('${n}')">${n}</button>`).join('')}
-      <button onclick="kp('c')">C</button><button onclick="kp('0')">0</button><button onclick="kp('b')">⌫</button>
-    </div>`);
+      ${[1,2,3,4,5,6,7,8,9].map(n=>`<button ontouchstart="kpT(event,'${n}')" onclick="kpC('${n}')">${n}</button>`).join('')}
+      <button ontouchstart="kpT(event,'c')" onclick="kpC('c')">C</button><button ontouchstart="kpT(event,'0')" onclick="kpC('0')">0</button><button ontouchstart="kpT(event,'b')" onclick="kpC('b')">⌫</button>
+    </div>`,'up');
 }
 function dispDate(d){ const x=new Date(dkey(d)); if(isNaN(x))return dkey(d); const wd='日一二三四五六'[x.getDay()]; return `${x.getFullYear()}年${x.getMonth()+1}月${x.getDate()}日 週${wd}`; }
 function accName(id){ const a=accMap()[id]; return a?(a.icon?a.icon+' ':'')+esc(a.name):'選擇'; }
@@ -671,11 +683,29 @@ function openCatPicker(){
   const grid=cats.map(c=>`<div class="cbox" onclick="pickCat('${c.category_id}','${c.icon}','${esc(c.name)}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('')||'<div class="empty">先到設定新增分類</div>';
   openModal(`
     <div class="mtop"><button class="x" style="width:auto;white-space:nowrap;font-size:15px" onclick="closeTopModal()">‹ 返回</button><div class="t">選擇分類</div><span style="width:40px"></span></div>
-    <div class="mscroll"><div class="cgrid">${grid}</div></div>`);
+    <div class="mscroll"><div class="cgrid">${grid}</div></div>`,'right');
 }
-function pickCat(id,icon,name){ txnDraft.category_id=id; const el=document.getElementById('catPickTxt'); if(el){ el.classList.remove('ph'); el.innerHTML=esc(name)+' <span class="ar">›</span>'; } const row=document.getElementById('txnCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; } closeTopModal(); }
+function pickCat(id,icon,name){
+  txnDraft.category_id=id;
+  const el=document.getElementById('catPickTxt'); if(el){ el.classList.remove('ph'); el.innerHTML=esc(name)+' <span class="ar">›</span>'; }
+  const row=document.getElementById('txnCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; }
+  // 副業相關：帳戶預設第一銀行、成員預設小樣兒園藝
+  if(name && name.indexOf('副業')>=0){
+    const bank=DB.accounts.find(a=>a.name&&a.name.indexOf('第一銀行')>=0);
+    const mem=(DB.members||[]).find(m=>m.name&&m.name.indexOf('小樣兒')>=0);
+    if(bank){ txnDraft.account_id=bank.account_id; const sa=document.getElementById('txnAcc'); if(sa){sa.value=bank.account_id;syncSel('txnAcc');} }
+    if(mem){ txnDraft.member_id=mem.member_id; const sm=document.getElementById('txnMem'); if(sm){sm.value=mem.member_id;syncSel('txnMem');} }
+  }
+  closeTopModal();
+}
 function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
-function kp(k){ let a=txnDraft.amount; if(k==='c')a='0'; else if(k==='b')a=a.length>1?a.slice(0,-1):'0'; else { a=(a==='0')?k:a+k; } txnDraft.amount=a; document.getElementById('amtDisp').textContent=fmt(a); }
+function showSaving(msg){ let el=document.getElementById('savingMask'); if(!el){ el=document.createElement('div'); el.id='savingMask'; el.className='savingmask'; el.innerHTML='<div class="savingbox"><div class="spinner"></div><div id="savingTxt"></div></div>'; document.getElementById('app').appendChild(el); } document.getElementById('savingTxt').textContent=msg||'處理中…'; el.classList.add('show'); }
+function hideSaving(){ const el=document.getElementById('savingMask'); if(el)el.classList.remove('show'); }
+function delConfirm(msg){ const p=prompt((msg||'確定刪除？')+'\n請輸入密碼確認：'); if(p===null)return false; if(p!=='1309'){ toast('密碼錯誤'); return false; } return true; }
+let _kpTouched=false;
+function kpT(e,k){ e.preventDefault(); _kpTouched=true; kp(k); setTimeout(()=>{_kpTouched=false;},400); }
+function kpC(k){ if(_kpTouched)return; kp(k); } // 桌機點擊；觸控已處理過就略過
+function kp(k){ let a=txnDraft.amount; if(k==='c')a='0'; else if(k==='b')a=a.length>1?a.slice(0,-1):'0'; else { a=(a==='0')?k:a+k; } txnDraft.amount=a; const el=document.getElementById('amtDisp'); if(el)el.textContent=fmt(a); }
 async function saveTxn(edit){
   if(!txnDraft.amount||Number(txnDraft.amount)<=0){ toast('請輸入金額'); return; }
   if(txnDraft.type!=='transfer'&&!txnDraft.category_id){ toast('請選分類'); return; }
@@ -684,13 +714,14 @@ async function saveTxn(edit){
     if(txnDraft.account_id===txnDraft.to_account_id){ toast('轉出轉入不能同一帳戶'); return; }
   }
   const payload={type:txnDraft.type,amount:Number(txnDraft.amount),category_id:txnDraft.category_id,account_id:txnDraft.account_id,to_account_id:txnDraft.to_account_id||'',date:txnDraft.date,note:txnDraft.note,member_id:txnDraft.member_id||''};
-  toast('儲存中…');
+  showSaving('新增中…');
   let res;
   if(edit){ payload.txn_id=txnDraft.txn_id; res=await apiPost('updateTxn',{payload}); }
   else res=await apiPost('addTxn',{payload});
+  hideSaving();
   if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); } else toast('失敗');
 }
-async function delTxn(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteTxn',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+async function delTxn(id){ if(!delConfirm())return; const res=await apiPost('deleteTxn',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
 
 // ========== 帳戶 ==========
 let accDraft;
@@ -731,7 +762,7 @@ async function saveAcc(edit){
   else { payload.sort=DB.accounts.length+1; payload.archived=false; res=await apiPost('addAccount',{payload}); }
   if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); }
 }
-async function delAcc(id){ if(!confirm('確定刪除？相關記錄不會自動刪'))return; const res=await apiPost('deleteAccount',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+async function delAcc(id){ if(!delConfirm('刪除帳戶（相關記錄不會自動刪）'))return; const res=await apiPost('deleteAccount',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
 
 // ========== 持倉 ==========
 let holdDraft;
@@ -830,7 +861,7 @@ async function saveHold(edit){
   else { p.sort=DB.holdings.length+1; res=await apiPost('addHolding',{payload:p}); }
   if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); } else toast('儲存失敗');
 }
-async function delHold(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteHolding',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+async function delHold(id){ if(!delConfirm())return; const res=await apiPost('deleteHolding',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
 
 // ========== 設定 ==========
 function openSettings(){
@@ -849,7 +880,7 @@ function openSettings(){
 
 // 分類管理
 let catTab='expense';
-function openCategories(){ catTab='expense'; renderCatModal(); }
+function openCategories(){ if(!catTab)catTab='expense'; renderCatModal(); }
 function renderCatModal(){
   const cats=DB.categories.filter(c=>c.type===catTab&&String(c.archived)!=='true').sort((a,b)=>(a.sort||0)-(b.sort||0));
   const grid=cats.map(c=>`<div class="cbox" onclick="openEditCat('${c.category_id}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('');
@@ -878,12 +909,22 @@ function renderCatEdit(title,edit){
 async function saveCat(edit){
   catDraft.name=document.getElementById('cName').value.trim();
   if(!catDraft.name){ toast('請輸入名稱'); return; }
+  catTab=catDraft.type; // 切到該分類的類型頁
+  showSaving('儲存中…');
   let res;
   if(edit){ res=await apiPost('updateCategory',{payload:{category_id:catDraft.category_id,name:catDraft.name,type:catDraft.type,icon:catDraft.icon}}); }
   else { res=await apiPost('addCategory',{payload:{name:catDraft.name,type:catDraft.type,icon:catDraft.icon,sort:DB.categories.length+1,archived:false}}); }
-  if(res.ok){ closeAllModal(); await loadAll(); openCategories(); toast('已儲存'); }
+  hideSaving();
+  if(res.ok){ closeModal(document.querySelectorAll('.modal')[document.querySelectorAll('.modal').length-1]); await loadAll(); renderCatModalRefresh(); toast('已儲存'); } else toast('儲存失敗');
 }
-async function delCat(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteCategory',{id}); if(res.ok){ closeAllModal(); await loadAll(); openCategories(); toast('已刪除'); } }
+// 重整最上層的分類管理 modal 內容（不關閉、不閃）
+function renderCatModalRefresh(){
+  const top=document.querySelectorAll('.modal');
+  // 找到分類管理那層（含 cgrid），重繪它
+  for(let i=top.length-1;i>=0;i--){ if(top[i].querySelector('.cgrid')){ closeModal(top[i]); break; } }
+  renderCatModal();
+}
+async function delCat(id){ if(!delConfirm())return; const res=await apiPost('deleteCategory',{id}); if(res.ok){ closeAllModal(); await loadAll(); openCategories(); toast('已刪除'); } }
 
 // 貸款管理
 function openLoans(){
@@ -932,7 +973,7 @@ async function saveLoan(edit){
   else res=await apiPost('addLoan',{payload:p});
   if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已儲存 ✓'); } else { toast('儲存失敗，請再試一次'); }
 }
-async function delLoan(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteLoan',{id}); if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已刪除'); } }
+async function delLoan(id){ if(!delConfirm())return; const res=await apiPost('deleteLoan',{id}); if(res.ok){ closeAllModal(); await loadAll(); openLoans(); toast('已刪除'); } }
 
 // ========== 週期支出 / 轉帳 ==========
 const FREQ_LABEL={monthly:'每月',weekly:'每週',yearly:'每年'};
@@ -995,7 +1036,7 @@ async function saveRec(edit){
   else res=await apiPost('addRecurring',{payload:p});
   if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已儲存'); }
 }
-async function delRec(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteRecurring',{id}); if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已刪除'); } }
+async function delRec(id){ if(!delConfirm())return; const res=await apiPost('deleteRecurring',{id}); if(res.ok){ closeAllModal(); await loadAll(); openRecurrings(); toast('已刪除'); } }
 
 // ========== 成員管理 ==========
 function openMembers(){
@@ -1026,7 +1067,7 @@ async function saveMem(edit){
   else res=await apiPost('addMember',{payload:{name:memDraft.name,icon:memDraft.icon,archived:false}});
   if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已儲存'); }
 }
-async function delMem(id){ if(!confirm('確定刪除？'))return; const res=await apiPost('deleteMember',{id}); if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已刪除'); } }
+async function delMem(id){ if(!delConfirm())return; const res=await apiPost('deleteMember',{id}); if(res.ok){ closeAllModal(); await loadAll(); openMembers(); toast('已刪除'); } }
 
 // ========== 統計分析 ==========
 // 支出：紅粉橘莫蘭迪系
@@ -1305,10 +1346,11 @@ function tutPrev(){ if(tutStep>0)tutStep--; else if(tutSec>0){tutSec--;tutStep=T
 const splashStart = Date.now();
 function hideSplash(){ const sp=document.getElementById('splash'); if(sp){ sp.classList.add('hide'); setTimeout(()=>sp.remove(),500); } }
 loadAll().then(()=>{
-  const wait = Math.max(0, 1500 - (Date.now()-splashStart));
+  const foot=document.getElementById('splashFoot'); if(foot)foot.textContent='財神保佑・記帳理財';
+  const wait = Math.max(0, 1500 - (Date.now()-splashStart)); // 至少停留 1.5 秒
   setTimeout(hideSplash, wait);
-});
-setTimeout(hideSplash, 4500); // 保險：最長 4.5 秒一定淡出
+}).catch(()=>{ hideSplash(); });
+setTimeout(hideSplash, 6000); // 保險：最長 6 秒一定淡出
 </script>
 </body>
 </html>
