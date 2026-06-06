@@ -808,10 +808,18 @@ function renderHoldModal(title,edit){
         <div class="field"><label>每月扣款日 (1-28)</label><input class="inp" id="hDcaDay" type="number" min="1" max="28" value="${holdDraft.dca_day}"></div>
         <div class="field"><label>扣款帳戶</label><select class="inp" id="hDcaAcc">${accOpts('dca_account')}</select></div>
       `:`
-        <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">系統用建立當天的淨值/股價，把投入金額換算成單位數。</div>
+        ${holdDraft.type==='etf'?`
+        <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">ETF 單筆像買股票：填實際成交的股數與每股價格（看券商對帳單）。</div>
+        <div class="field"><label>股數</label><input class="inp" id="hShares" type="number" value="${holdDraft.shares}" placeholder="例如 1000"></div>
+        <div class="field"><label>成交價 (每股)</label><input class="inp" id="hCost" type="number" value="${holdDraft.avg_cost}" placeholder="例如 190"></div>
+        <div class="field"><label>建立日期</label><input class="inp" id="hDate" type="date" value="${holdDraft.buy_date}"></div>
+        <div class="field"><label>扣款帳戶</label><select class="inp" id="hAcc">${accOpts('account_id')}</select></div>
+        `:`
+        <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">基金單筆：填投入金額，系統用建立當天的淨值換算成單位數。</div>
         <div class="field"><label>投入金額</label><input class="inp" id="hAmt" type="number" value="${holdDraft.invest_amount}" placeholder="例如 50000"></div>
         <div class="field"><label>建立日期</label><input class="inp" id="hDate" type="date" value="${holdDraft.buy_date}"></div>
         <div class="field"><label>扣款帳戶</label><select class="inp" id="hAcc">${accOpts('account_id')}</select></div>
+        `}
       `}
       `}
       ${edit?`<button class="bigbtn btn-danger" onclick="delHold('${holdDraft.holding_id}')">刪除</button>`:''}
@@ -860,9 +868,16 @@ async function saveHold(edit){
       p.dca_account=holdDraft.dca_account;
       if(!p.dca_amount){ toast('請填每期扣款金額'); return; }
     }else{
-      p.invest_amount=Number(holdDraft.invest_amount)||0;
-      p.buy_date=holdDraft.buy_date;
-      if(!p.invest_amount){ toast('請填投入金額'); return; }
+      // 單筆
+      if(type==='etf'){
+        p.shares=Number(holdDraft.shares)||0; p.avg_cost=Number(holdDraft.avg_cost)||0;
+        p.buy_date=holdDraft.buy_date;
+        if(!p.shares||!p.avg_cost){ toast('請填股數和成交價'); return; }
+      }else{
+        p.invest_amount=Number(holdDraft.invest_amount)||0;
+        p.buy_date=holdDraft.buy_date;
+        if(!p.invest_amount){ toast('請填投入金額'); return; }
+      }
     }
   }
   toast('儲存中…');
