@@ -280,12 +280,12 @@ select.inp option{background:#13302d;color:var(--ink)}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app" class="bookmode">
   <div class="loading" id="loading"><div class="spinner"></div><div style="color:var(--sub);font-size:13px;font-weight:700">載入中…</div></div>
 
   <!-- 頂列 -->
   <div class="topbar">
-    <div class="title" id="topTitle">主頁</div>
+    <div class="title" id="topTitle">記帳本</div>
     <div style="display:flex;gap:8px;align-items:center">
       <div class="addchip" id="topAdd" style="display:none" onclick="onTopAdd()"><svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M12 5v14M5 12h14"/></svg>新增</div>
       <div class="gear" onclick="openStats()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
@@ -296,9 +296,9 @@ select.inp option{background:#13302d;color:var(--ink)}
   <!-- 內容 -->
   <div class="scroll" id="scroll">
     <!-- 主頁 -->
-    <div class="page on" id="page-home"></div>
+    <div class="page" id="page-home"></div>
     <!-- 記帳本 -->
-    <div class="page" id="page-book"></div>
+    <div class="page on" id="page-book"></div>
     <!-- 存款 -->
     <div class="page" id="page-bank"></div>
     <!-- 投資 -->
@@ -307,8 +307,8 @@ select.inp option{background:#13302d;color:var(--ink)}
 
   <!-- 底部 Tab -->
   <div class="tabbar">
-    <button class="tab on" data-page="home" onclick="switchPage('home')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>主頁</button>
-    <button class="tab" data-page="book" onclick="switchPage('book')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM9 3v16"/></svg>記帳本</button>
+    <button class="tab" data-page="home" onclick="switchPage('home')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>主頁</button>
+    <button class="tab on" data-page="book" onclick="switchPage('book')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM9 3v16"/></svg>記帳本</button>
     <button class="addbtn" onclick="openAddTxn()"><svg viewBox="0 0 24 24" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
     <button class="tab" data-page="bank" onclick="switchPage('bank')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M3 9l9-6 9 6M4 9v10h16V9M9 19v-6h6v6"/></svg>存款</button>
     <button class="tab" data-page="invest" onclick="switchPage('invest')"><svg viewBox="0 0 24 24" stroke-width="2.2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>投資</button>
@@ -332,7 +332,7 @@ console.log('查理的記帳APP 版本：' + APP_VERSION);
 const API_URL = 'https://script.google.com/macros/s/AKfycbz5gSWhKNxKdBWrxG2CCL9Ht5A_4cUE_S3SqOTdhPsf5mjpYhFC3ELnGs8RtCdMFl9jiA/exec';
 
 let DB = null;             // 全部資料
-let curPage = 'home';
+let curPage = 'book';
 let bookDate = todayStr(); // 記帳本選定日期
 let calYear, calMonth;     // 月曆顯示年月
 
