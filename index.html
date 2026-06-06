@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0a1a18">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -134,7 +134,7 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg2);color:v
 .setrow .e{font-size:19px}.setrow .ar{margin-left:auto;color:var(--sub);font-size:18px}
 
 /* 全頁彈窗 */
-.modal{position:absolute;inset:0;background:radial-gradient(140% 100% at 50% 120%,#16302e,#0a1a18);z-index:30;display:flex;flex-direction:column;opacity:0;transition:opacity .15s ease,transform .25s cubic-bezier(.34,1.1,.6,1);visibility:hidden}
+.modal{position:absolute;inset:0;background:radial-gradient(140% 100% at 50% 120%,#16302e,#0a1a18);z-index:30;display:flex;flex-direction:column;opacity:0;transition:opacity .25s ease,transform .42s cubic-bezier(.22,.61,.36,1);visibility:hidden}
 .modal::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(65% 45% at 72% 4%,rgba(130,210,195,.22),transparent 60%),radial-gradient(55% 50% at 18% 16%,rgba(90,160,155,.16),transparent 60%)}
 .modal>*{position:relative;z-index:1}
 .modal.anim-up{transform:translateY(100%)}
@@ -628,7 +628,7 @@ function openModal(html, anim){
   requestAnimationFrame(()=>div.classList.add('show'));
   return div;
 }
-function closeModal(el){ el.classList.remove('show'); el.style.pointerEvents='none'; setTimeout(()=>el.remove(),280); }
+function closeModal(el){ el.classList.remove('show'); el.style.pointerEvents='none'; setTimeout(()=>el.remove(),440); }
 function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeModal(m)); }
 
 // ========== 記帳表單 ==========
