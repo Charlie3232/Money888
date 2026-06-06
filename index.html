@@ -581,7 +581,7 @@ function renderInvest(){
       <div style="text-align:right;flex-shrink:0"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'red':'green'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
   }).join('')||'<div class="empty">尚無持倉，點右上新增</div>';
   document.getElementById('page-invest').innerHTML=`
-    <div class="card"><h3>投資總覽 <button class="save" style="font-size:13px" onclick="doRefresh()">↻ 更新現價</button></h3>
+    <div class="card"><h3>投資總覽 <button class="save" style="font-size:12px;padding:4px 12px" onclick="doRefresh()">↻ 更新現價</button></h3>
       <div style="display:flex;align-items:baseline;gap:10px"><div class="big" style="font-size:30px;font-family:Outfit;font-weight:700;color:${t.invest>=0?'var(--green)':'var(--red)'}">$${fmt(t.invest)}</div>
       <div class="amt ${t.pl>=0?'green':'red'}" style="font-weight:700">未實現 ${t.pl>=0?'+':''}${plPct.toFixed(1)}%</div></div>
       <div class="grid5" style="margin-top:12px"><div class="mbox" style="grid-column:auto"><div class="l">股票</div><div class="v green">${fmt(t.stock)}</div></div>
@@ -1356,13 +1356,15 @@ function tutPrev(){ if(tutStep>0)tutStep--; else if(tutSec>0){tutSec--;tutStep=T
 
 // ---------- 啟動 ----------
 const splashStart = Date.now();
-function hideSplash(){ const sp=document.getElementById('splash'); if(sp){ sp.classList.add('hide'); setTimeout(()=>sp.remove(),500); } }
+let _splashGone = false;
+function hideSplash(){ if(_splashGone) return; _splashGone=true; document.getElementById('loading').style.display='none'; const sp=document.getElementById('splash'); if(sp){ sp.classList.add('hide'); setTimeout(()=>sp.remove(),500); } }
 loadAll().then(()=>{
   const foot=document.getElementById('splashFoot'); if(foot)foot.textContent='財神保佑・記帳理財';
-  const wait = Math.max(0, 1500 - (Date.now()-splashStart)); // 至少停留 1.5 秒
+  // 資料載完才淡出 splash（至少停 1.2 秒讓動畫播完），淡出時 loading 已隱藏，不會再看到轉圈
+  const wait = Math.max(0, 1200 - (Date.now()-splashStart));
   setTimeout(hideSplash, wait);
-}).catch(()=>{ hideSplash(); });
-setTimeout(hideSplash, 6000); // 保險：最長 6 秒一定淡出
+}).catch(()=>{ setTimeout(hideSplash, 1200); });
+setTimeout(hideSplash, 8000); // 保險：最長 8 秒一定淡出
 </script>
 </body>
 </html>
