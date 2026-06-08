@@ -292,6 +292,7 @@ select.inp option{background:#13302d;color:var(--ink)}
   <div class="topbar">
     <div class="title" id="topTitle">記帳本</div>
     <div style="display:flex;gap:8px;align-items:center">
+      <div class="addchip" id="topSell" style="display:none;background:linear-gradient(135deg,#e0a890,#cf8a72);color:#2a1810" onclick="openSellPicker()"><svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" fill="none" stroke="#2a1810"><path d="M12 19V5M5 12l7 7 7-7"/></svg>賣出</div>
       <div class="addchip" id="topAdd" style="display:none" onclick="onTopAdd()"><svg viewBox="0 0 24 24" stroke-width="2.4" stroke-linecap="round" fill="none"><path d="M12 5v14M5 12h14"/></svg>新增</div>
       <div class="gear" onclick="openStats()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
       <div class="gear" onclick="openSettings()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.5-2.4 1a7 7 0 0 0-1.7-1l-.4-2.5h-4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a7 7 0 0 0 0 2l-2 1.5 2 3.5 2.4-1a7 7 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1 2-3.5-2-1.5a7 7 0 0 0 .1-1z"/></svg></div>
@@ -622,6 +623,7 @@ function switchPage(p){
   document.getElementById('topTitle').textContent=titles[p];
   // 存款/投資頁顯示「新增」chip
   document.getElementById('topAdd').style.display=(p==='bank'||p==='invest')?'flex':'none';
+  document.getElementById('topSell').style.display=(p==='invest')?'flex':'none';
   document.getElementById('app').classList.toggle('bookmode', p==='book');
   document.getElementById('scroll').scrollTop=0;
 }
@@ -904,8 +906,7 @@ function renderHoldModal(title,edit){
         `}
       `}
       `}
-      ${edit?`<button class="bigbtn" style="background:linear-gradient(135deg,#e0a890,#cf8a72);color:#2a1810;margin-top:6px" onclick="openSellHolding('${holdDraft.holding_id}')">賣出 / 贖回</button>
-      <button class="bigbtn btn-danger" onclick="delHold('${holdDraft.holding_id}')">刪除</button>`:''}
+      ${edit?`<button class="bigbtn btn-danger" onclick="delHold('${holdDraft.holding_id}')">刪除</button>`:''}
     </div>`);
 }
 // ===== 代號自動建議 =====
@@ -1000,6 +1001,17 @@ async function saveHold(edit){
 async function delHold(id){ if(!delConfirm())return; const res=await apiPost('deleteHolding',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
 
 // ===== 賣出 / 贖回 =====
+function openSellPicker(){
+  const hs=DB.holdings.filter(h=>String(h.active)!=='false' && (Number(h.shares)||0)>0);
+  if(!hs.length){ toast('目前沒有可賣出的持倉'); return; }
+  const list=hs.map(h=>`<div class="lrow" onclick="closeTopModal();openSellHolding('${h.holding_id}')">
+    <div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
+    <div class="nm">${esc(h.name)}<small>${esc(h.symbol)} · 持有 ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 現價 ${fmt(h.price)}</small></div>
+    <div class="amt">${fmt(h.marketValue)}</div></div>`).join('');
+  openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">選擇賣出的持倉</div><span style="width:30px"></span></div>
+    <div class="mscroll"><div class="card" style="padding:4px 16px">${list}</div></div>`);
+}
 let sellDraft;
 function openSellHolding(id){
   const h=DB.holdings.find(x=>String(x.holding_id)===String(id)); if(!h)return;
@@ -1017,10 +1029,10 @@ function renderSellModal(h){
       <div class="card" style="margin-bottom:14px"><div style="font-weight:800;font-size:16px">${esc(sellDraft.name)}</div>
         <div style="font-size:12px;color:var(--sub);margin-top:4px">${esc(sellDraft.symbol)} · 持有 ${fmt(sellDraft.curUnits)} ${unitLabel} · 平均成本 ${fmt(sellDraft.avg)} · 現價 ${fmt(sellDraft.price)}</div></div>
       ${isFund?`
-      <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">基金贖回填金額，系統用現在淨值換算贖回單位數。</div>
-      <div class="field"><label>贖回金額</label><input class="inp" id="sAmt" type="number" value="${sellDraft.sell_amount}" placeholder="例如 30000"></div>
+      <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">基金贖回填金額，系統用現在淨值換算贖回單位數。目前市值約 ${fmt(sellDraft.curUnits*sellDraft.price)}。</div>
+      <div class="field"><label>贖回金額（上限約 ${fmt(sellDraft.curUnits*sellDraft.price)}）</label><input class="inp" id="sAmt" type="number" min="0" value="${sellDraft.sell_amount}" placeholder="例如 30000"></div>
       `:`
-      <div class="field"><label>賣出股數（持有 ${fmt(sellDraft.curUnits)}）</label><input class="inp" id="sShares" type="number" value="${sellDraft.sell_shares}" placeholder="全部賣就填 ${fmt(sellDraft.curUnits)}"></div>
+      <div class="field"><label>賣出股數（持有 ${fmt(sellDraft.curUnits)}）</label><input class="inp" id="sShares" type="number" min="0" max="${sellDraft.curUnits}" value="${sellDraft.sell_shares}" placeholder="全部賣就填 ${fmt(sellDraft.curUnits)}"></div>
       <div class="field"><label>賣出單價（每股）</label><input class="inp" id="sPrice" type="number" value="${sellDraft.sell_price}"></div>
       `}
       <div class="field"><label>款項回到帳戶</label><select class="inp" id="sAcc">${accs}</select></div>
@@ -1033,10 +1045,13 @@ async function doSell(){
   if(isFund){
     p.sell_amount=Number(document.getElementById('sAmt').value)||0;
     if(!p.sell_amount){ toast('請填贖回金額'); return; }
+    const maxAmt=sellDraft.curUnits*sellDraft.price;
+    if(sellDraft.price>0 && p.sell_amount>maxAmt+1){ toast('贖回金額超過持有市值（約'+fmt(maxAmt)+'）'); return; }
   }else{
     p.sell_shares=Number(document.getElementById('sShares').value)||0;
     p.sell_price=Number(document.getElementById('sPrice').value)||0;
     if(!p.sell_shares){ toast('請填賣出股數'); return; }
+    if(p.sell_shares>sellDraft.curUnits){ toast('賣出股數超過持有（'+fmt(sellDraft.curUnits)+'）'); return; }
     if(!p.sell_price){ toast('請填賣出單價'); return; }
   }
   showSaving('賣出處理中…');
