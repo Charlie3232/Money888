@@ -361,17 +361,38 @@ async function apiGet(action){
   return await r.json();
 }
 let _posting = false;
-async function apiPost(action, extra){
-  if(_posting){ return {ok:false, error:'busy'}; } // 防連點/重送
-  _posting = true;
+// 單次送出（含20秒逾時）
+async function apiPostOnce(action, extra){
+  const ctrl = new AbortController();
+  const timer = setTimeout(function(){ ctrl.abort(); }, 20000);
   try{
     const r = await fetch(API_URL, {
       method:'POST',
       redirect:'follow',
       body: JSON.stringify(Object.assign({action}, extra)),
-      headers:{'Content-Type':'text/plain;charset=utf-8'} // 避免 CORS preflight
+      headers:{'Content-Type':'text/plain;charset=utf-8'}, // 避免 CORS preflight
+      signal: ctrl.signal
     });
     return await r.json();
+  } catch(err) {
+    return { ok:false, error: (err && err.name==='AbortError') ? 'timeout' : String(err), _netfail:true };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+// 對外送出：失敗(逾時/網路)自動重試最多2次（共3趟），中間退避
+async function apiPost(action, extra){
+  if(_posting){ return {ok:false, error:'busy'}; } // 防連點/重送
+  _posting = true;
+  try{
+    let res, delays=[800,1800];
+    for(let i=0;i<=delays.length;i++){
+      res = await apiPostOnce(action, extra);
+      // 後端有回應（不論成功或業務失敗）就不再重試；只有網路/逾時才重試
+      if(!res._netfail) return res;
+      if(i<delays.length) await new Promise(r=>setTimeout(r, delays[i]));
+    }
+    return res; // 重試用盡仍網路失敗
   } finally {
     _posting = false;
   }
@@ -419,6 +440,21 @@ function dayTotals(d){
 }
 function catMap(){ const m={}; DB.categories.forEach(c=>m[c.category_id]=c); return m; }
 function accMap(){ const m={}; DB.accounts.forEach(a=>m[a.account_id]=a); return m; }
+
+// ---------- 本地更新：不重抓全部，直接改本地 DB ----------
+// 調整某帳戶本地餘額（與後端 adjustBalance_ 一致）
+function adjBalLocal(accId, delta){
+  if(!accId) return;
+  const a=DB.accounts.find(x=>String(x.account_id)===String(accId));
+  if(a) a.balance=(Number(a.balance)||0)+delta;
+}
+// 把一筆交易反映到本地帳戶餘額（sign=1套用、-1還原），與後端 applyTxnToBalance_ 一致
+function applyTxnLocal(t, sign){
+  const amt=Number(t.amount)||0;
+  if(t.type==='income')  adjBalLocal(t.account_id, amt*sign);
+  if(t.type==='expense') adjBalLocal(t.account_id, -amt*sign);
+  if(t.type==='transfer'){ adjBalLocal(t.account_id, -amt*sign); adjBalLocal(t.to_account_id, amt*sign); }
+}
 
 // ---------- 渲染：全部 ----------
 function renderAll(){ renderHome(); renderBook(); renderBank(); renderInvest(); }
@@ -652,7 +688,7 @@ function openAddTxn(){
 }
 function openEditTxn(id){
   const t=DB.transactions.find(x=>String(x.txn_id)===String(id)); if(!t)return;
-  txnDraft={txn_id:t.txn_id,type:t.type,amount:String(t.amount),category_id:t.category_id,account_id:t.account_id,date:dkey(t.date),note:t.note||'',member_id:t.member_id||''};
+  txnDraft={txn_id:t.txn_id,type:t.type,amount:String(t.amount),category_id:t.category_id,account_id:t.account_id,to_account_id:t.to_account_id||'',date:dkey(t.date),note:t.note||'',member_id:t.member_id||''};
   renderTxnModal('編輯記帳',true);
 }
 function renderTxnModal(title,edit){
@@ -741,9 +777,47 @@ async function saveTxn(edit){
   if(edit){ payload.txn_id=txnDraft.txn_id; res=await apiPost('updateTxn',{payload}); }
   else res=await apiPost('addTxn',{payload});
   hideSaving();
-  if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); } else toast('失敗');
+  // 成功，或後端去重(dedup＝其實已寫入)都當成功
+  if(res.ok || res.dedup){
+    if(edit){
+      // 編輯：先還原舊交易對餘額的影響，再套新值
+      const old=DB.transactions.find(x=>String(x.txn_id)===String(payload.txn_id));
+      if(old){ applyTxnLocal(old, -1); Object.assign(old, payload); }
+      applyTxnLocal(payload, 1);
+    } else {
+      // 新增：用後端回傳的 txn_id（沒有就臨時給一個），加進本地清單
+      const nt=Object.assign({}, payload, { txn_id: (res.id||payload.txn_id||('txn_'+Date.now())), created_at: nowLocalStr() });
+      DB.transactions.push(nt);
+      applyTxnLocal(nt, 1);
+    }
+    renderAll();
+    closeAllModal();
+    toast('已儲存');
+  }
+  else if(res.error==='busy'){ toast('處理中，請稍候'); }
+  else if(res.error==='timeout'){ toast('連線逾時，已自動重試仍失敗，請稍後再試'); }
+  else toast('失敗');
 }
-async function delTxn(id){ if(!delConfirm())return; const res=await apiPost('deleteTxn',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+// 本地時間字串（與後端 created_at 格式一致，供排序用）
+function nowLocalStr(){
+  const d=new Date(), p=n=>('0'+n).slice(-2);
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+}
+async function delTxn(id){
+  if(!delConfirm())return;
+  showSaving('刪除中…');
+  const res=await apiPost('deleteTxn',{id});
+  hideSaving();
+  if(res.ok || res.dedup){
+    const old=DB.transactions.find(x=>String(x.txn_id)===String(id));
+    if(old){ applyTxnLocal(old, -1); DB.transactions=DB.transactions.filter(x=>String(x.txn_id)!==String(id)); }
+    renderAll();
+    closeAllModal();
+    toast('已刪除');
+  }
+  else if(res.error==='timeout'){ toast('連線逾時，請稍後再試'); }
+  else toast('刪除失敗');
+}
 
 // ========== 帳戶 ==========
 let accDraft;
