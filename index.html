@@ -804,6 +804,7 @@ function pickFeeCat(id,icon,name){
   const row=document.getElementById('txnFeeCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; }
   closeTopModal();
 }
+function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
 function showSaving(msg){ let el=document.getElementById('savingMask'); if(!el){ el=document.createElement('div'); el.id='savingMask'; el.className='savingmask'; el.innerHTML='<div class="savingbox"><div class="spinner"></div><div id="savingTxt"></div></div>'; document.getElementById('app').appendChild(el); } document.getElementById('savingTxt').textContent=msg||'處理中…'; el.classList.add('show'); }
 function hideSaving(){ const el=document.getElementById('savingMask'); if(el)el.classList.remove('show'); }
 function delConfirm(msg){ const p=prompt((msg||'確定刪除？')+'\n請輸入密碼確認：'); if(p===null)return false; if(p!=='1309'){ toast('密碼錯誤'); return false; } return true; }
