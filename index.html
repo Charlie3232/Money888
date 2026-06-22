@@ -361,6 +361,8 @@ function dkey(v){ // 把任何日期字串正規化成 yyyy-MM-dd
   return s.slice(0,10);
 }
 function fmt(n){ n=Number(n)||0; return n.toLocaleString('en-US',{maximumFractionDigits:0}); }
+// 帶小數版（投資頁的單位數/淨值/成本用）：最多 dp 位，去掉尾端多餘的 0
+function fmtN(n, dp){ n=Number(n)||0; return n.toLocaleString('en-US',{minimumFractionDigits:0, maximumFractionDigits:(dp==null?2:dp)}); }
 function fmtSign(n){ n=Number(n)||0; return (n>=0?'+':'')+fmt(n); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
@@ -637,7 +639,7 @@ function renderInvest(){
   let list=hs.sort((a,b)=>(a.sort||0)-(b.sort||0)).map(h=>{
     const up=h.pl>=0;
     return `<div class="lrow" onclick="openEditHolding('${h.holding_id}')"><div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
-      <div class="nm" style="min-width:0"><div style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.name)}</span>${h.buy_mode==='dca'?'<span style="font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap">定期定額</span>':''}</div><small style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${esc(h.symbol)} · ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmt(h.avg_cost)} → 現 ${fmt(h.price)}</small></div>
+      <div class="nm" style="min-width:0"><div style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.name)}</span>${h.buy_mode==='dca'?'<span style="font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap">定期定額</span>':''}</div><small style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${esc(h.symbol)} · ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmtN(h.avg_cost,4)} → 現 ${fmtN(h.price,4)}</small></div>
       <div style="text-align:right;flex-shrink:0"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'red':'green'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
   }).join('')||'<div class="empty">尚無持倉，點右上新增</div>';
   document.getElementById('page-invest').innerHTML=`
@@ -1148,7 +1150,7 @@ function openSellPicker(){
   if(!hs.length){ toast('目前沒有可賣出的持倉'); return; }
   const list=hs.map(h=>`<div class="lrow" onclick="closeTopModal();openSellHolding('${h.holding_id}')">
     <div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
-    <div class="nm">${esc(h.name)}<small>${esc(h.symbol)} · 持有 ${fmt(h.shares)} ${h.type==='fund'?'單位':'股'} · 現價 ${fmt(h.price)}</small></div>
+    <div class="nm">${esc(h.name)}<small>${esc(h.symbol)} · 持有 ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 現價 ${fmtN(h.price,4)}</small></div>
     <div class="amt">${fmt(h.marketValue)}</div></div>`).join('');
   openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">選擇賣出的持倉</div><span style="width:30px"></span></div>
@@ -1169,12 +1171,12 @@ function renderSellModal(h){
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">賣出 / 贖回</div><button class="save" onclick="doSell()">確定</button></div>
     <div class="mscroll">
       <div class="card" style="margin-bottom:14px"><div style="font-weight:800;font-size:16px">${esc(sellDraft.name)}</div>
-        <div style="font-size:12px;color:var(--sub);margin-top:4px">${esc(sellDraft.symbol)} · 持有 ${fmt(sellDraft.curUnits)} ${unitLabel} · 平均成本 ${fmt(sellDraft.avg)} · 現價 ${fmt(sellDraft.price)}</div></div>
+        <div style="font-size:12px;color:var(--sub);margin-top:4px">${esc(sellDraft.symbol)} · 持有 ${fmtN(sellDraft.curUnits,4)} ${unitLabel} · 平均成本 ${fmtN(sellDraft.avg,4)} · 現價 ${fmtN(sellDraft.price,4)}</div></div>
       ${isFund?`
       <div style="font-size:12px;color:var(--sub);padding:0 2px 8px;line-height:1.6">基金贖回填金額，系統用現在淨值換算贖回單位數。目前市值約 ${fmt(sellDraft.curUnits*sellDraft.price)}。</div>
       <div class="field"><label>贖回金額（上限約 ${fmt(sellDraft.curUnits*sellDraft.price)}）</label><input class="inp" id="sAmt" type="number" min="0" value="${sellDraft.sell_amount}" placeholder="例如 30000"></div>
       `:`
-      <div class="field"><label>賣出股數（持有 ${fmt(sellDraft.curUnits)}）</label><input class="inp" id="sShares" type="number" min="0" max="${sellDraft.curUnits}" value="${sellDraft.sell_shares}" placeholder="全部賣就填 ${fmt(sellDraft.curUnits)}"></div>
+      <div class="field"><label>賣出股數（持有 ${fmtN(sellDraft.curUnits,4)}）</label><input class="inp" id="sShares" type="number" min="0" max="${sellDraft.curUnits}" value="${sellDraft.sell_shares}" placeholder="全部賣就填 ${fmtN(sellDraft.curUnits,4)}"></div>
       <div class="field"><label>賣出單價（每股）</label><input class="inp" id="sPrice" type="number" value="${sellDraft.sell_price}"></div>
       `}
       <div class="field"><label>款項回到帳戶</label><select class="inp" id="sAcc">${accs}</select></div>
@@ -1193,7 +1195,7 @@ async function doSell(){
     p.sell_shares=Number(document.getElementById('sShares').value)||0;
     p.sell_price=Number(document.getElementById('sPrice').value)||0;
     if(!p.sell_shares){ toast('請填賣出股數'); return; }
-    if(p.sell_shares>sellDraft.curUnits){ toast('賣出股數超過持有（'+fmt(sellDraft.curUnits)+'）'); return; }
+    if(p.sell_shares>sellDraft.curUnits){ toast('賣出股數超過持有（'+fmtN(sellDraft.curUnits,4)+'）'); return; }
     if(!p.sell_price){ toast('請填賣出單價'); return; }
   }
   showSaving('賣出處理中…');
