@@ -270,6 +270,16 @@ select.inp option{background:#13302d;color:var(--ink)}
 .sugbox .si .sc{font-family:'Outfit';font-weight:800;font-size:14px;color:var(--coral3);min-width:54px}
 .sugbox .si .sn{font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .donut{width:120px;height:120px;margin:0 auto}
+/* 統計分析：可點擊展開明細 */
+.statgrow{cursor:pointer}
+.statar{flex-shrink:0;color:var(--sub);font-size:18px;margin-left:8px;width:14px;text-align:center}
+.statdetail{padding:2px 0 10px 54px;animation:fadein .2s ease}
+@keyframes fadein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.statditem{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.statditem:last-child{border:none}
+.statditem .dd{color:var(--sub);font-size:11px;font-family:'Outfit';font-weight:700;flex-shrink:0;min-width:38px}
+.statditem .dn{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.statditem .da{font-weight:800;font-family:'Outfit';flex-shrink:0}
 /* 啟動畫面 splash（像微信進入） */
 #splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#c0392b 0%,#a02718 60%,#7d1c10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;gap:22px}
 #splash.hide{opacity:0;pointer-events:none}
@@ -333,7 +343,7 @@ select.inp option{background:#13302d;color:var(--ink)}
 </div>
 
 <script>
-const APP_VERSION = 'v2026.06.05-loan-manual';
+const APP_VERSION = 'v2026.06.22-fee-stats';
 console.log('查理的記帳APP 版本：' + APP_VERSION);
 const API_URL = 'https://script.google.com/macros/s/AKfycbypWcSo-hgv49sSyZR6tmcolkrrq8gV1xOvB3BxHx1SFM7KwiAUe_CwOQFsFSEEzwXQYg/exec';
 
@@ -474,9 +484,17 @@ function renderHome(){
     spark=`<svg viewBox="0 0 100 64" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#a6ccc0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   } else spark='<div style="color:#7a6258;font-size:11px;text-align:center;padding-top:22px">資料累積中，明天起顯示趨勢</div>';
 
-  // 月增減%
-  let chg='—';
-  if(snaps.length>1){ const a=Number(snaps[snaps.length-2].total_assets)||0, b=Number(snaps[snaps.length-1].total_assets)||0; if(a>0)chg=((b-a)/a*100).toFixed(1)+'%'; }
+  // 月增減%：用「本月最早一筆快照」對比「目前即時總資產」
+  let chgNum=null;
+  if(snaps.length){
+    const curYm=todayStr().slice(0,7);
+    const monthSnaps=snaps.filter(s=>dkey(s.date).slice(0,7)===curYm);
+    // 本月有快照→取本月最早一筆；本月還沒快照→用最後一筆快照當基準
+    const base= monthSnaps.length ? (Number(monthSnaps[0].total_assets)||0) : (Number(snaps[snaps.length-1].total_assets)||0);
+    if(base>0) chgNum=(t.assets-base)/base*100;
+  }
+  const chgTxt = (chgNum==null) ? '—' : (Math.abs(chgNum).toFixed(1)+'%');
+  const chgArrow = (chgNum==null) ? '' : (chgNum>=0?'↑':'↓');
 
   let loansHtml = DB.loans.filter(l=>String(l.active)!=='false').map(l=>`
     <div class="lrow"><div class="ico">${l.icon||'💳'}</div>
@@ -487,7 +505,7 @@ function renderHome(){
     <div class="hero">
       <div class="label">淨資產 Net Worth</div>
       <div class="big">$${fmt(t.assets)}</div>
-      <div class="sub"><span class="up">↑ ${chg} 本月</span></div>
+      <div class="sub"><span class="up">${chgArrow} ${chgTxt} 本月</span></div>
       <div class="trend">${spark}</div>
     </div>
     <div class="card"><h3>資產總覽</h3>
@@ -679,11 +697,17 @@ function closeAllModal(){ document.querySelectorAll('.modal').forEach(m=>closeMo
 
 // ========== 記帳表單 ==========
 let txnDraft;
+let txnIsEdit=false;
+// 找出「手續費」支出分類（給轉帳手續費自動帶入用），找不到回空字串
+function feeDefaultCatId(){
+  const c=(DB.categories||[]).find(x=>x.type==='expense'&&String(x.archived)!=='true'&&String(x.name||'').indexOf('手續費')>=0);
+  return c?c.category_id:'';
+}
 function openAddTxn(){
   const dt = (curPage==='book') ? bookDate : todayStr();
   const firstAcc = DB.accounts.filter(a=>String(a.archived)!=='true')[0];
   const firstMem = (DB.members||[]).filter(m=>String(m.archived)!=='true')[0];
-  txnDraft={type:'expense',amount:'0',category_id:'',account_id:firstAcc?firstAcc.account_id:'',date:dt,note:'',member_id:firstMem?firstMem.member_id:''};
+  txnDraft={type:'expense',amount:'0',category_id:'',account_id:firstAcc?firstAcc.account_id:'',date:dt,note:'',member_id:firstMem?firstMem.member_id:'',fee:'',fee_category_id:feeDefaultCatId()};
   renderTxnModal('新增記帳');
 }
 function openEditTxn(id){
@@ -692,8 +716,11 @@ function openEditTxn(id){
   renderTxnModal('編輯記帳',true);
 }
 function renderTxnModal(title,edit){
+  txnIsEdit=!!edit;
   const cm=catMap();
   const selCatObj=cm[txnDraft.category_id];
+  const feeCatObj=cm[txnDraft.fee_category_id];
+  const showFee=(txnDraft.type==='transfer' && !edit); // 手續費僅新增轉帳時提供
   const accs=DB.accounts.filter(a=>String(a.archived)!=='true').map(a=>`<option value="${a.account_id}" ${txnDraft.account_id===a.account_id?'selected':''}>${esc(a.name)}</option>`).join('');
   const members=(DB.members||[]).filter(x=>String(x.archived)!=='true');
   const memOpts=members.map(mm=>`<option value="${mm.member_id}" ${txnDraft.member_id===mm.member_id?'selected':''}>${mm.icon||'👤'} ${esc(mm.name)}</option>`).join('');
@@ -711,6 +738,8 @@ function renderTxnModal(title,edit){
       <div class="trow" id="txnCatRow" style="${txnDraft.type==='transfer'?'display:none':''}" onclick="openCatPicker()"><span class="ti">${selCatObj?selCatObj.icon:'🏷️'}</span><span class="tl">類別</span><span class="tv ${selCatObj?'':'ph'}" id="catPickTxt">${selCatObj?esc(selCatObj.name):'選擇'} <span class="ar">›</span></span></div>
       <div class="trow"><span class="ti">👛</span><span class="tl" id="txnAccLabel">${txnDraft.type==='transfer'?'轉出':'帳戶'}</span><select id="txnAcc" class="tv" onchange="txnDraft.account_id=this.value;syncSel('txnAcc')">${accs}</select><span class="selval" id="txnAccVal">${accName(txnDraft.account_id)} <span class="ar">›</span></span></div>
       <div class="trow" id="txnToAccRow" style="${txnDraft.type==='transfer'?'':'display:none'}"><span class="ti">🎯</span><span class="tl">轉入</span><select id="txnToAcc" class="tv" onchange="txnDraft.to_account_id=this.value;syncSel('txnToAcc')">${accs}</select><span class="selval" id="txnToAccVal">${accName(txnDraft.to_account_id)} <span class="ar">›</span></span></div>
+      <div class="trow" id="txnFeeRow" style="${showFee?'':'display:none'}"><span class="ti">🧾</span><span class="tl">手續費</span><input class="tv" type="number" inputmode="numeric" id="txnFee" value="${txnDraft.fee||''}" placeholder="0（選填）" oninput="txnDraft.fee=this.value"></div>
+      <div class="trow" id="txnFeeCatRow" style="${showFee?'':'display:none'}" onclick="openFeeCatPicker()"><span class="ti">${feeCatObj?feeCatObj.icon:'🏷️'}</span><span class="tl">手續費類別</span><span class="tv ${feeCatObj?'':'ph'}" id="feeCatTxt">${feeCatObj?esc(feeCatObj.name):'選擇'} <span class="ar">›</span></span></div>
       ${members.length?`<div class="trow" id="txnMemRow" style="${txnDraft.type==='transfer'?'display:none':''}"><span class="ti">👤</span><span class="tl">成員</span><select id="txnMem" class="tv" onchange="txnDraft.member_id=this.value;syncSel('txnMem')">${memOpts}</select><span class="selval" id="txnMemVal">${memName(txnDraft.member_id)} <span class="ar">›</span></span></div>`:''}
       <div class="trow"><span class="ti">📅</span><span class="tl">日期</span><input class="tv" type="date" id="txnDate" value="${dkey(txnDraft.date)}" onchange="txnDraft.date=this.value"></div>
       <div class="trow"><span class="ti">📝</span><span class="tl">備註</span><input class="tv" id="txnNote" value="${esc(txnDraft.note)}" placeholder="選填" oninput="txnDraft.note=this.value"></div>
@@ -734,6 +763,9 @@ function setTxnType(t){
   const memR=document.getElementById('txnMemRow'); if(memR) memR.style.display=(t==='transfer')?'none':'flex';
   const accLbl=document.getElementById('txnAccLabel'); if(accLbl) accLbl.textContent=(t==='transfer')?'轉出':'帳戶';
   const toRow=document.getElementById('txnToAccRow'); if(toRow) toRow.style.display=(t==='transfer')?'flex':'none';
+  const showFee=(t==='transfer' && !txnIsEdit);
+  const feeR=document.getElementById('txnFeeRow'); if(feeR) feeR.style.display=showFee?'flex':'none';
+  const feeCR=document.getElementById('txnFeeCatRow'); if(feeCR) feeCR.style.display=showFee?'flex':'none';
 }
 // 分類選擇頁（全頁）
 function openCatPicker(){
@@ -756,7 +788,20 @@ function pickCat(id,icon,name){
   }
   closeTopModal();
 }
-function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
+// 手續費類別選擇（只列支出分類）
+function openFeeCatPicker(){
+  const cats=DB.categories.filter(c=>c.type==='expense'&&String(c.archived)!=='true').sort((a,b)=>(a.sort||0)-(b.sort||0));
+  const grid=cats.map(c=>`<div class="cbox" onclick="pickFeeCat('${c.category_id}','${c.icon}','${esc(c.name)}')"><div class="e">${c.icon}</div><div class="t">${esc(c.name)}</div></div>`).join('')||'<div class="empty">先到設定新增支出分類</div>';
+  openModal(`
+    <div class="mtop"><button class="x" style="width:auto;white-space:nowrap;font-size:15px" onclick="closeTopModal()">‹ 返回</button><div class="t">手續費類別</div><span style="width:40px"></span></div>
+    <div class="mscroll"><div class="cgrid">${grid}</div></div>`,'right');
+}
+function pickFeeCat(id,icon,name){
+  txnDraft.fee_category_id=id;
+  const el=document.getElementById('feeCatTxt'); if(el){ el.classList.remove('ph'); el.innerHTML=esc(name)+' <span class="ar">›</span>'; }
+  const row=document.getElementById('txnFeeCatRow'); if(row){ const ti=row.querySelector('.ti'); if(ti) ti.textContent=icon; }
+  closeTopModal();
+}
 function showSaving(msg){ let el=document.getElementById('savingMask'); if(!el){ el=document.createElement('div'); el.id='savingMask'; el.className='savingmask'; el.innerHTML='<div class="savingbox"><div class="spinner"></div><div id="savingTxt"></div></div>'; document.getElementById('app').appendChild(el); } document.getElementById('savingTxt').textContent=msg||'處理中…'; el.classList.add('show'); }
 function hideSaving(){ const el=document.getElementById('savingMask'); if(el)el.classList.remove('show'); }
 function delConfirm(msg){ const p=prompt((msg||'確定刪除？')+'\n請輸入密碼確認：'); if(p===null)return false; if(p!=='1309'){ toast('密碼錯誤'); return false; } return true; }
@@ -767,36 +812,59 @@ function kp(k){ let a=txnDraft.amount; if(k==='c')a='0'; else if(k==='b')a=a.len
 async function saveTxn(edit){
   if(!txnDraft.amount||Number(txnDraft.amount)<=0){ toast('請輸入金額'); return; }
   if(txnDraft.type!=='transfer'&&!txnDraft.category_id){ toast('請選分類'); return; }
+  let feeAmt=0, feeCat='';
   if(txnDraft.type==='transfer'){
     if(!txnDraft.to_account_id) txnDraft.to_account_id=document.getElementById('txnToAcc')?.value||'';
     if(txnDraft.account_id===txnDraft.to_account_id){ toast('轉出轉入不能同一帳戶'); return; }
+    if(!edit){ // 手續費僅新增轉帳時處理
+      feeAmt=Number(txnDraft.fee)||0;
+      feeCat=txnDraft.fee_category_id||'';
+      if(feeAmt>0 && !feeCat){ toast('請選手續費類別'); return; }
+    }
   }
   const payload={type:txnDraft.type,amount:Number(txnDraft.amount),category_id:txnDraft.category_id,account_id:txnDraft.account_id,to_account_id:txnDraft.to_account_id||'',date:txnDraft.date,note:txnDraft.note,member_id:txnDraft.member_id||''};
-  showSaving('新增中…');
+  showSaving(edit?'儲存中…':'新增中…');
   let res;
   if(edit){ payload.txn_id=txnDraft.txn_id; res=await apiPost('updateTxn',{payload}); }
   else res=await apiPost('addTxn',{payload});
-  hideSaving();
-  // 成功，或後端去重(dedup＝其實已寫入)都當成功
-  if(res.ok || res.dedup){
-    if(edit){
-      // 編輯：先還原舊交易對餘額的影響，再套新值
-      const old=DB.transactions.find(x=>String(x.txn_id)===String(payload.txn_id));
-      if(old){ applyTxnLocal(old, -1); Object.assign(old, payload); }
-      applyTxnLocal(payload, 1);
-    } else {
-      // 新增：用後端回傳的 txn_id（沒有就臨時給一個），加進本地清單
-      const nt=Object.assign({}, payload, { txn_id: (res.id||payload.txn_id||('txn_'+Date.now())), created_at: nowLocalStr() });
-      DB.transactions.push(nt);
-      applyTxnLocal(nt, 1);
-    }
-    renderAll();
-    closeAllModal();
-    toast('已儲存');
+
+  if(!(res.ok || res.dedup)){
+    hideSaving();
+    if(res.error==='busy'){ toast('處理中，請稍候'); }
+    else if(res.error==='timeout'){ toast('連線逾時，已自動重試仍失敗，請稍後再試'); }
+    else toast('失敗');
+    return;
   }
-  else if(res.error==='busy'){ toast('處理中，請稍候'); }
-  else if(res.error==='timeout'){ toast('連線逾時，已自動重試仍失敗，請稍後再試'); }
-  else toast('失敗');
+
+  // 主交易本地更新（dedup 也視為已寫入）
+  if(edit){
+    const old=DB.transactions.find(x=>String(x.txn_id)===String(payload.txn_id));
+    if(old){ applyTxnLocal(old, -1); Object.assign(old, payload); }
+    applyTxnLocal(payload, 1);
+  } else {
+    const nt=Object.assign({}, payload, { txn_id: (res.id||payload.txn_id||('txn_'+Date.now())), created_at: nowLocalStr() });
+    DB.transactions.push(nt);
+    applyTxnLocal(nt, 1);
+  }
+
+  // 轉帳手續費（做法B）：來源帳戶已扣轉帳金額，手續費再另記一筆支出
+  // 淨效果＝來源扣(轉帳額+手續費)、目的只收轉帳額
+  if(!edit && txnDraft.type==='transfer' && feeAmt>0){
+    const feePayload={type:'expense',amount:feeAmt,category_id:feeCat,account_id:txnDraft.account_id,to_account_id:'',date:txnDraft.date,note:'轉帳手續費',member_id:txnDraft.member_id||''};
+    const feeRes=await apiPost('addTxn',{payload:feePayload});
+    if(feeRes.ok || feeRes.dedup){
+      const ft=Object.assign({}, feePayload, { txn_id: (feeRes.id||('txn_'+Date.now()+'_fee')), created_at: nowLocalStr() });
+      DB.transactions.push(ft);
+      applyTxnLocal(ft, 1);
+    } else {
+      toast('轉帳已存，但手續費記錄失敗，請手動補記');
+    }
+  }
+
+  hideSaving();
+  renderAll();
+  closeAllModal();
+  toast('已儲存');
 }
 // 本地時間字串（與後端 created_at 格式一致，供排序用）
 function nowLocalStr(){
@@ -1350,16 +1418,19 @@ const STAT_EXP_COLORS=['#c97a6d','#b59ac4','#d4a85e','#8aa3b8','#cf8fa8','#9aae8
 const STAT_INC_COLORS=['#7a9a6e','#8aa3c4','#c4b87a','#b59ac4','#d49a8a','#9ab0a0','#c4a06a','#8fb0c0','#aab084','#cf9ab0'];
 function statColors(){ return statTab==='income'?STAT_INC_COLORS:STAT_EXP_COLORS; }
 let statYear, statMonth, statTab='expense', statSub='category';
+let statExpanded=new Set(); // 統計列展開狀態（key=群組key）
 function openStats(){
   const d=new Date(); if(statYear==null){ statYear=d.getFullYear(); statMonth=d.getMonth()+1; }
+  statExpanded.clear();
   openModal(`<div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">統計分析</div><span style="width:30px"></span></div>
     <div class="mscroll" id="statBody"></div>`);
   renderStats();
 }
 function statYM(){ return statYear+'-'+String(statMonth).padStart(2,'0'); }
-function statNav(dir){ statMonth+=dir; if(statMonth<1){statMonth=12;statYear--;} if(statMonth>12){statMonth=1;statYear++;} renderStats(); }
-function setStatTab(t){ statTab=t; if(t!=='trend'&&statSub==='trend')statSub='category'; renderStats(); }
-function setStatSub(s){ statSub=s; renderStats(); }
+function statNav(dir){ statMonth+=dir; if(statMonth<1){statMonth=12;statYear--;} if(statMonth>12){statMonth=1;statYear++;} statExpanded.clear(); renderStats(); }
+function setStatTab(t){ statTab=t; if(t!=='trend'&&statSub==='trend')statSub='category'; statExpanded.clear(); renderStats(); }
+function setStatSub(s){ statSub=s; statExpanded.clear(); renderStats(); }
+function toggleStatRow(key){ if(statExpanded.has(key))statExpanded.delete(key); else statExpanded.add(key); renderStats(); }
 
 function renderStats(){
   const body=document.getElementById('statBody'); if(!body)return;
@@ -1396,15 +1467,33 @@ function renderStats(){
       if(statSub==='category'){ const c=cm[t.category_id]||{}; key=t.category_id||'none'; label=c.name||'未分類'; icon=c.icon||'❓'; }
       else if(statSub==='account'){ const a=am[t.account_id]||{}; key=t.account_id||'none'; label=a.name||'未知'; icon=a.icon||'🏦'; }
       else { const mid=t.member_id||'none'; const mm=(DB.members||[]).find(x=>String(x.member_id)===String(mid)); key=mid; label=mm?mm.name:'未指定'; icon=mm?(mm.icon||'👤'):'👤'; }
-      if(!groups[key]) groups[key]={label,icon,amt:0};
+      if(!groups[key]) groups[key]={key,label,icon,amt:0,items:[]};
       groups[key].amt+=Number(t.amount)||0;
+      groups[key].items.push(t);
     });
     const arr=Object.values(groups).sort((a,b)=>b.amt-a.amt);
     const total=arr.reduce((s,g)=>s+g.amt,0);
     const cols=statColors();
+    const amtCls=statTab==='income'?'green':'red';
     inner+=`<div class="card">${donutChart(arr,total)}${arr.length?arr.map((g,i)=>{
       const pct=total>0?(g.amt/total*100):0;
-      return `<div class="lrow"><div class="ico" style="background:${cols[i%cols.length]}22;border-color:${cols[i%cols.length]}">${g.icon}</div><div class="nm">${esc(g.label)}<small>${pct.toFixed(1)}%</small></div><div class="amt ${statTab==='income'?'green':'red'}">${fmt(g.amt)}</div></div>`;
+      const open=statExpanded.has(g.key);
+      let detail='';
+      if(open){
+        const items=g.items.slice().sort((a,b)=>dkey(b.date).localeCompare(dkey(a.date))||String(b.created_at||'').localeCompare(String(a.created_at||'')));
+        detail=`<div class="statdetail">${items.map(t=>{
+          const c=cm[t.category_id]||{}; const a=am[t.account_id]||{};
+          const dd=dkey(t.date).slice(5).replace('-','/');
+          // 依目前分組維度，明細顯示「另一個維度」做為主要說明
+          let main;
+          if(statSub==='category') main=esc(a.name||'')||'—';
+          else if(statSub==='account') main=esc(c.name||'')||'未分類';
+          else main=(c.icon||'')+' '+(esc(c.name||'')||'未分類');
+          const note=t.note?' · '+esc(t.note):'';
+          return `<div class="statditem"><span class="dd">${dd}</span><span class="dn">${main}${note}</span><span class="da ${amtCls}">${fmt(t.amount)}</span></div>`;
+        }).join('')}</div>`;
+      }
+      return `<div class="lrow statgrow" onclick="toggleStatRow('${g.key}')"><div class="ico" style="background:${cols[i%cols.length]}22;border-color:${cols[i%cols.length]}">${g.icon}</div><div class="nm">${esc(g.label)}<small>${pct.toFixed(1)}% · ${g.items.length} 筆</small></div><div class="amt ${amtCls}">${fmt(g.amt)}</div><span class="statar">${open?'▾':'›'}</span></div>${detail}`;
     }).join(''):'<div class="empty">本月無資料</div>'}</div>`;
   }
   body.innerHTML=inner;
