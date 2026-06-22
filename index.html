@@ -280,6 +280,12 @@ select.inp option{background:#13302d;color:var(--ink)}
 .statditem .dd{color:var(--sub);font-size:11px;font-family:'Outfit';font-weight:700;flex-shrink:0;min-width:38px}
 .statditem .dn{flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .statditem .da{font-weight:800;font-family:'Outfit';flex-shrink:0}
+/* 本月智慧月報卡 */
+.report{background:var(--herograd);border:1px solid rgba(255,255,255,.16);border-radius:18px;padding:16px 18px;margin-bottom:14px;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.report h3{color:var(--ink);margin-bottom:10px;font-size:13px;letter-spacing:.5px;text-transform:none}
+.report .repline{font-size:14px;line-height:1.95;color:var(--ink)}
+.report .repline b{font-weight:800}
+.report .repfoot{font-size:11px;color:var(--sub);margin-top:10px}
 /* 啟動畫面 splash（像微信進入） */
 #splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#c0392b 0%,#a02718 60%,#7d1c10 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s ease;gap:22px}
 #splash.hide{opacity:0;pointer-events:none}
@@ -491,8 +497,14 @@ function renderHome(){
   if(snaps.length){
     const curYm=todayStr().slice(0,7);
     const monthSnaps=snaps.filter(s=>dkey(s.date).slice(0,7)===curYm);
-    // 本月有快照→取本月最早一筆；本月還沒快照→用最後一筆快照當基準
-    const base= monthSnaps.length ? (Number(monthSnaps[0].total_assets)||0) : (Number(snaps[snaps.length-1].total_assets)||0);
+    let base=0;
+    if(monthSnaps.length){
+      base=Number(monthSnaps[0].total_assets)||0;                 // ① 本月最早一筆快照
+    } else {
+      const before=snaps.filter(s=>dkey(s.date).slice(0,7)<curYm); // 本月還沒快照
+      if(before.length) base=Number(before[before.length-1].total_assets)||0; // ② 退而求其次：上月最後一筆
+      else base=Number(snaps[0].total_assets)||0;                 // ③ 月中才開始用：手上最早一筆
+    }
     if(base>0) chgNum=(t.assets-base)/base*100;
   }
   const chgTxt = (chgNum==null) ? '—' : (Math.abs(chgNum).toFixed(1)+'%');
@@ -1515,6 +1527,55 @@ function donutChart(arr,total){
   </div>`;
 }
 
+// ========== 本月智慧月報（純公式，不呼叫 AI）==========
+function monthReport(ym){
+  const cm=catMap();
+  const cur=monthTotals(ym);
+  // 上月
+  let py=Number(ym.slice(0,4)), pm=Number(ym.slice(5,7))-1; if(pm<1){pm=12;py--;}
+  const prev=monthTotals(py+'-'+String(pm).padStart(2,'0'));
+  // 本月支出按類別彙整
+  const exp={};
+  DB.transactions.forEach(t=>{ if(t.type==='expense' && dkey(t.date).slice(0,7)===ym){ const k=t.category_id||'none'; exp[k]=(exp[k]||0)+(Number(t.amount)||0); } });
+  const expArr=Object.keys(exp).map(k=>({name:(cm[k]||{}).name||'未分類',icon:(cm[k]||{}).icon||'❓',amt:exp[k]})).sort((a,b)=>b.amt-a.amt);
+
+  if(!(cur.inc>0||cur.exp>0)) return `<div class="card report"><h3>本月智慧月報 · ${ym}</h3><div class="repline" style="color:var(--sub)">本月還沒有足夠的記帳資料，記幾筆之後就會自動幫你體檢 🍃</div></div>`;
+
+  const L=[];
+  const netCls=cur.net>=0?'green':'red';
+  L.push(`本月收入 <b class="green">${fmt(cur.inc)}</b>、支出 <b class="red">${fmt(cur.exp)}</b>，結餘 <b class="${netCls}">${fmtSign(cur.net)}</b>。`);
+  // 存錢率 / 入不敷出
+  if(cur.inc>0){
+    const sr=cur.net/cur.inc*100;
+    if(cur.net<0) L.push(`本月<b class="red">入不敷出</b>，支出比收入多了 ${fmt(-cur.net)} 元，要留意一下。`);
+    else if(sr>=30) L.push(`存錢率 <b class="green">${sr.toFixed(0)}%</b>，存得很漂亮 👍`);
+    else if(sr>0) L.push(`存錢率 ${sr.toFixed(0)}%，穩穩的。`);
+  }
+  // 與上月比（支出）
+  if(prev.exp>0){
+    const d=(cur.exp-prev.exp)/prev.exp*100;
+    if(Math.abs(d)>=5) L.push(`支出比上月<b class="${d>=0?'red':'green'}">${d>=0?'增加':'減少'} ${Math.abs(d).toFixed(0)}%</b>。`);
+    else L.push(`支出跟上月差不多。`);
+  }
+  // 最大支出類別 Top1
+  if(expArr.length){
+    const top=expArr[0]; const pct=cur.exp>0?(top.amt/cur.exp*100):0;
+    L.push(`花最多的是 ${top.icon} <b>${esc(top.name)}</b>，${fmt(top.amt)} 元（佔支出 ${pct.toFixed(0)}%）。`);
+    if(expArr[1]){ const t2=expArr[1]; L.push(`其次是 ${t2.icon} ${esc(t2.name)} ${fmt(t2.amt)} 元。`); }
+  }
+  // 廣告／行銷（有該類別才顯示）
+  const adArr=expArr.filter(g=>g.name.indexOf('廣告')>=0||g.name.indexOf('行銷')>=0);
+  if(adArr.length){
+    const adSum=adArr.reduce((s,g)=>s+g.amt,0);
+    const pctExp=cur.exp>0?(adSum/cur.exp*100):0;
+    L.push(`廣告／行銷支出 ${fmt(adSum)} 元，佔本月支出 ${pctExp.toFixed(0)}%。`);
+  }
+  return `<div class="card report">
+    <h3>✨ 本月智慧月報 · ${ym}</h3>
+    <div class="repbody">${L.map(s=>`<div class="repline">${s}</div>`).join('')}</div>
+    <div class="repfoot">依本月記帳資料自動產生</div>
+  </div>`;
+}
 function renderTrend(){
   const months=[];
   let y=statYear, mo=statMonth;
@@ -1552,7 +1613,7 @@ function renderTrend(){
   // 累計總收支
   let cum=0; const cumData=data.map(d=>{ cum+=d.net; return cum; });
 
-  return `<div class="card"><h3>近 6 個月收支趨勢</h3>
+  return monthReport(statYM()) + `<div class="card"><h3>近 6 個月收支趨勢</h3>
     <svg viewBox="0 0 ${W} ${H+20}" style="width:100%">
       ${grid}${yaxis}
       ${bars}
