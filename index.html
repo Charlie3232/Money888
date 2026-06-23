@@ -664,7 +664,7 @@ function renderInvest(){
   let list=hs.sort((a,b)=>(a.sort||0)-(b.sort||0)).map(h=>{
     const up=h.pl>=0;
     return `<div class="lrow" onclick="openEditHolding('${h.holding_id}')"><div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
-      <div class="nm" style="min-width:0"><div style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.name)}</span>${h.buy_mode==='dca'?'<span style="font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap">定期定額</span>':''}</div><small style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${esc(h.symbol)} · ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmtN(h.avg_cost,4)} → 現 ${fmtN(h.price,4)}</small></div>
+      <div class="nm" style="min-width:0"><div style="display:flex;align-items:center;gap:6px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.name)}</span>${h.buy_mode==='dca'?'<span style="font-size:10px;background:var(--coral);color:#fff;padding:1px 6px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap">定期定額</span>':''}</div><small style="display:flex;align-items:center;gap:4px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.symbol)}</span><span style="white-space:nowrap;flex-shrink:0">· ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 成本 ${fmtN(h.avg_cost,4)} → 現 ${fmtN(h.price,4)}</span></small></div>
       <div style="text-align:right;flex-shrink:0"><div class="amt">${fmt(h.marketValue)}</div><div class="amt ${up?'red':'green'}" style="font-size:12px">${up?'+':''}${h.plPct.toFixed(1)}%</div></div></div>`;
   }).join('')||'<div class="empty">尚無持倉，點右上新增</div>';
   document.getElementById('page-invest').innerHTML=`
@@ -1176,8 +1176,8 @@ function openSellPicker(){
   if(!hs.length){ toast('目前沒有可賣出的持倉'); return; }
   const list=hs.map(h=>`<div class="lrow" onclick="closeTopModal();openSellHolding('${h.holding_id}')">
     <div class="ico">${h.type==='stock'?'📈':h.type==='etf'?'🧺':'📊'}</div>
-    <div class="nm">${esc(h.name)}<small>${esc(h.symbol)} · 持有 ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 現價 ${fmtN(h.price,4)}</small></div>
-    <div class="amt">${fmt(h.marketValue)}</div></div>`).join('');
+    <div class="nm" style="min-width:0">${esc(h.name)}<small style="display:flex;align-items:center;gap:4px;min-width:0"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${esc(h.symbol)}</span><span style="white-space:nowrap;flex-shrink:0">· 持有 ${fmtN(h.shares,4)} ${h.type==='fund'?'單位':'股'} · 現價 ${fmtN(h.price,4)}</span></small></div>
+    <div class="amt" style="flex-shrink:0">${fmt(h.marketValue)}</div></div>`).join('');
   openModal(`
     <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">選擇賣出的持倉</div><span style="width:30px"></span></div>
     <div class="mscroll"><div class="card" style="padding:4px 16px">${list}</div></div>`);
