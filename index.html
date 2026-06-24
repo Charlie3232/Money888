@@ -387,8 +387,16 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;',
 
 // ---------- API ----------
 async function apiGet(action){
-  const r = await fetch(API_URL+'?action='+action);
-  return await r.json();
+  const ctrl = new AbortController();
+  const timer = setTimeout(function(){ ctrl.abort(); }, 20000);
+  try{
+    const r = await fetch(API_URL+'?action='+action, { signal: ctrl.signal });
+    clearTimeout(timer);
+    return await r.json();
+  }catch(err){
+    clearTimeout(timer);
+    return { ok:false, error:(err && err.name==='AbortError')?'timeout':String(err) };
+  }
 }
 let _posting = false;
 // 單次送出（含20秒逾時）
@@ -429,10 +437,33 @@ async function apiPost(action, extra){
 }
 
 async function loadAll(){
-  const res = await apiGet('all');
-  if(res.ok){ DB = res.data; renderAll(); switchPage('book'); }
-  else { toast('載入失敗'); console.error(res.error); }
-  document.getElementById('loading').style.display='none';
+  const el = document.getElementById('loading');
+  let res = null;
+  for(let attempt=1; attempt<=3; attempt++){
+    res = await apiGet('all');
+    if(res && res.ok && res.data) break;
+    if(attempt<3) await new Promise(function(r){ setTimeout(r, 1200); }); // 稍等再重試，給 GAS 喚醒時間
+  }
+  if(res && res.ok && res.data){
+    DB = res.data; renderAll(); switchPage('book');
+    if(el) el.style.display='none';
+  } else {
+    // 失敗不留白：顯示明確訊息＋重新載入鈕
+    if(el){
+      el.style.display='flex';
+      el.innerHTML = '<div style="text-align:center;padding:24px;max-width:280px">'
+        + '<div style="font-size:34px;margin-bottom:8px">😴</div>'
+        + '<div style="font-size:15px;font-weight:800;color:var(--ink);margin-bottom:6px">資料載入失敗</div>'
+        + '<div style="font-size:13px;color:var(--sub);line-height:1.6;margin-bottom:18px">可能是伺服器剛被喚醒或網路不穩，再按一次通常就好。</div>'
+        + '<button onclick="retryLoad()" style="border:none;background:var(--green);color:#fff;font-weight:800;font-size:15px;padding:11px 30px;border-radius:24px;cursor:pointer">🔄 重新載入</button></div>';
+    }
+    console.error('loadAll failed:', res && res.error);
+  }
+}
+function retryLoad(){
+  const el=document.getElementById('loading');
+  if(el){ el.innerHTML='<div class="spinner"></div><div style="color:var(--sub);font-size:13px;font-weight:700">喚醒資料庫中…</div>'; el.style.display='flex'; }
+  loadAll();
 }
 
 // ---------- emoji 庫（70+） ----------
@@ -1811,7 +1842,7 @@ function tutPrev(){ if(tutStep>0)tutStep--; else if(tutSec>0){tutSec--;tutStep=T
 // ---------- 啟動 ----------
 const splashStart = Date.now();
 let _splashGone = false;
-function hideSplash(){ if(_splashGone) return; _splashGone=true; document.getElementById('loading').style.display='none'; const sp=document.getElementById('splash'); if(sp){ sp.classList.add('hide'); setTimeout(()=>sp.remove(),500); } }
+function hideSplash(){ if(_splashGone) return; _splashGone=true; const sp=document.getElementById('splash'); if(sp){ sp.classList.add('hide'); setTimeout(()=>sp.remove(),500); } }
 loadAll().then(()=>{
   const foot=document.getElementById('splashFoot'); if(foot)foot.textContent='財神保佑・記帳理財';
   // 資料載完才淡出 splash（至少停 1.2 秒讓動畫播完），淡出時 loading 已隱藏，不會再看到轉圈
