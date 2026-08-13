@@ -258,6 +258,7 @@ select.inp option{background:#13302d;color:var(--ink)}
 .savingmask{position:absolute;inset:0;background:rgba(6,16,14,.5);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;visibility:hidden;transition:opacity .15s}
 .savingmask.show{opacity:1;visibility:visible}
 .savingbox{background:rgba(20,42,38,.9);backdrop-filter:blur(20px);border:1px solid var(--glassb);border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.4);padding:24px 32px;display:flex;flex-direction:column;align-items:center;gap:12px;font-weight:700;font-size:14px;color:var(--ink)}
+.savingbox small{display:block;color:var(--sub);font-size:12px;font-weight:700;text-align:center;max-width:220px;line-height:1.5}
 .toast{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(20,42,38,.95);backdrop-filter:blur(12px);border:1px solid var(--glassb);color:var(--ink);padding:11px 20px;border-radius:22px;font-size:14px;font-weight:700;z-index:90;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 .empty{text-align:center;color:var(--sub);font-size:13px;padding:30px 0}
@@ -364,6 +365,7 @@ select.inp option{background:#13302d;color:var(--ink)}
 const APP_VERSION = 'v2026.06.22-fee-stats';
 console.log('查理的記帳APP 版本：' + APP_VERSION);
 const API_URL = 'https://script.google.com/macros/s/AKfycbypWcSo-hgv49sSyZR6tmcolkrrq8gV1xOvB3BxHx1SFM7KwiAUe_CwOQFsFSEEzwXQYg/exec';
+const CACHE_KEY = 'money888:lastData:v1';
 
 let DB = null;             // 全部資料
 let curPage = 'book';
@@ -384,6 +386,32 @@ function fmtN(n, dp){ n=Number(n)||0; return n.toLocaleString('en-US',{minimumFr
 function fmtSign(n){ n=Number(n)||0; return (n>=0?'+':'')+fmt(n); }
 function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function readCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return null;
+    const cached = JSON.parse(raw);
+    return cached && cached.data ? cached : null;
+  }catch(e){ return null; }
+}
+function writeCache(data){
+  try{ localStorage.setItem(CACHE_KEY, JSON.stringify({ ts:Date.now(), data })); }catch(e){}
+}
+function renderCachedData(){
+  const cached = readCache();
+  if(!cached || DB) return false;
+  DB = cached.data;
+  renderAll();
+  switchPage('book');
+  const el = document.getElementById('loading');
+  if(el) el.style.display='none';
+  toast('先顯示上次資料，同步中…');
+  return true;
+}
+function loadingMsg(msg){
+  const el=document.getElementById('loadingMsg');
+  if(el) el.textContent=msg;
+}
 
 // ---------- API ----------
 async function apiGet(action){
@@ -438,16 +466,33 @@ async function apiPost(action, extra){
 
 async function loadAll(){
   const el = document.getElementById('loading');
+  if(el && !DB){
+    el.innerHTML='<div class="spinner"></div><div id="loadingMsg" style="color:var(--sub);font-size:13px;font-weight:700">讀取資料中…</div>';
+    el.style.display='flex';
+  }
+  const hasCache = renderCachedData();
+  const slow1 = setTimeout(function(){ loadingMsg('資料庫喚醒中，請稍候…'); }, 2500);
+  const slow2 = setTimeout(function(){ loadingMsg('還在同步，網路或伺服器可能比較慢…'); }, 7000);
   let res = null;
   for(let attempt=1; attempt<=3; attempt++){
+    if(!hasCache && attempt>1) loadingMsg('重新嘗試連線中…');
     res = await apiGet('all');
     if(res && res.ok && res.data) break;
     if(attempt<3) await new Promise(function(r){ setTimeout(r, 1200); }); // 稍等再重試，給 GAS 喚醒時間
   }
+  clearTimeout(slow1);
+  clearTimeout(slow2);
   if(res && res.ok && res.data){
     DB = res.data; renderAll(); switchPage('book');
+    writeCache(DB);
     if(el) el.style.display='none';
+    if(hasCache) toast('資料已同步');
   } else {
+    if(hasCache){
+      toast('同步失敗，先保留上次資料');
+      console.error('loadAll failed:', res && res.error);
+      return;
+    }
     // 失敗不留白：顯示明確訊息＋重新載入鈕
     if(el){
       el.style.display='flex';
@@ -462,7 +507,7 @@ async function loadAll(){
 }
 function retryLoad(){
   const el=document.getElementById('loading');
-  if(el){ el.innerHTML='<div class="spinner"></div><div style="color:var(--sub);font-size:13px;font-weight:700">喚醒資料庫中…</div>'; el.style.display='flex'; }
+  if(el){ el.innerHTML='<div class="spinner"></div><div id="loadingMsg" style="color:var(--sub);font-size:13px;font-weight:700">喚醒資料庫中…</div>'; el.style.display='flex'; }
   loadAll();
 }
 
@@ -861,8 +906,30 @@ function pickFeeCat(id,icon,name){
   closeTopModal();
 }
 function closeTopModal(){ const ms=document.querySelectorAll('.modal'); if(ms.length) closeModal(ms[ms.length-1]); if(document.querySelectorAll('.modal').length<=1){} }
-function showSaving(msg){ let el=document.getElementById('savingMask'); if(!el){ el=document.createElement('div'); el.id='savingMask'; el.className='savingmask'; el.innerHTML='<div class="savingbox"><div class="spinner"></div><div id="savingTxt"></div></div>'; document.getElementById('app').appendChild(el); } document.getElementById('savingTxt').textContent=msg||'處理中…'; el.classList.add('show'); }
-function hideSaving(){ const el=document.getElementById('savingMask'); if(el)el.classList.remove('show'); }
+let _savingTimers=[];
+function showSaving(msg){
+  let el=document.getElementById('savingMask');
+  if(!el){
+    el=document.createElement('div');
+    el.id='savingMask';
+    el.className='savingmask';
+    el.innerHTML='<div class="savingbox"><div class="spinner"></div><div id="savingTxt"></div><small id="savingHint"></small></div>';
+    document.getElementById('app').appendChild(el);
+  }
+  _savingTimers.forEach(t=>clearTimeout(t));
+  _savingTimers=[];
+  document.getElementById('savingTxt').textContent=msg||'處理中…';
+  document.getElementById('savingHint').textContent='請先不要關閉或重複送出';
+  _savingTimers.push(setTimeout(()=>{ const h=document.getElementById('savingHint'); if(h)h.textContent='伺服器正在處理，可能需要幾秒鐘'; }, 3500));
+  _savingTimers.push(setTimeout(()=>{ const h=document.getElementById('savingHint'); if(h)h.textContent='仍在同步，完成後會自動回到畫面'; }, 9000));
+  el.classList.add('show');
+}
+function hideSaving(){
+  _savingTimers.forEach(t=>clearTimeout(t));
+  _savingTimers=[];
+  const el=document.getElementById('savingMask');
+  if(el)el.classList.remove('show');
+}
 function delConfirm(msg){ const p=prompt((msg||'確定刪除？')+'\n請輸入密碼確認：'); if(p===null)return false; if(p!=='1309'){ toast('密碼錯誤'); return false; } return true; }
 let _kpTouched=false;
 function kpT(e,k){ e.preventDefault(); _kpTouched=true; kp(k); setTimeout(()=>{_kpTouched=false;},400); }
@@ -922,6 +989,7 @@ async function saveTxn(edit){
 
   hideSaving();
   renderAll();
+  writeCache(DB);
   closeAllModal();
   toast('已儲存');
 }
@@ -980,12 +1048,16 @@ async function saveAcc(edit){
   accDraft.type=document.getElementById('aType').value;
   if(!accDraft.name){ toast('請輸入名稱'); return; }
   const payload={name:accDraft.name,type:accDraft.type,currency:'TWD',balance:accDraft.balance,icon:accDraft.icon,exclude:accDraft.exclude};
+  showSaving('儲存帳戶中…');
   let res;
   if(edit){ payload.account_id=accDraft.account_id; res=await apiPost('updateAccount',{payload}); }
   else { payload.sort=DB.accounts.length+1; payload.archived=false; res=await apiPost('addAccount',{payload}); }
+  hideSaving();
   if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); }
+  else if(res.error==='timeout'){ toast('連線逾時，請稍後再試'); }
+  else toast('儲存失敗');
 }
-async function delAcc(id){ if(!delConfirm('刪除帳戶（相關記錄不會自動刪）'))return; const res=await apiPost('deleteAccount',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+async function delAcc(id){ if(!delConfirm('刪除帳戶（相關記錄不會自動刪）'))return; showSaving('刪除帳戶中…'); const res=await apiPost('deleteAccount',{id}); hideSaving(); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } else toast('刪除失敗'); }
 
 // ===== 帳戶交易紀錄 =====
 // 取得某帳戶的所有交易（從該帳戶角度正負化）
@@ -1193,13 +1265,14 @@ async function saveHold(edit){
       }
     }
   }
-  toast('儲存中…');
+  showSaving('儲存投資中…');
   let res;
   if(edit){ p.holding_id=holdDraft.holding_id; res=await apiPost('updateHolding',{payload:p}); }
   else { p.sort=DB.holdings.length+1; res=await apiPost('addHolding',{payload:p}); }
+  hideSaving();
   if(res.ok){ closeAllModal(); await loadAll(); toast('已儲存'); } else toast('儲存失敗');
 }
-async function delHold(id){ if(!delConfirm())return; const res=await apiPost('deleteHolding',{id}); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } }
+async function delHold(id){ if(!delConfirm())return; showSaving('刪除投資中…'); const res=await apiPost('deleteHolding',{id}); hideSaving(); if(res.ok){ closeAllModal(); await loadAll(); toast('已刪除'); } else toast('刪除失敗'); }
 
 // ===== 賣出 / 贖回 =====
 function openSellPicker(){
