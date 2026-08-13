@@ -960,6 +960,10 @@ async function saveTxn(edit){
   showSaving(edit?'儲存中…':'新增中…');
   let res;
   if(edit){ payload.txn_id=txnDraft.txn_id; res=await apiPost('updateTxn',{payload}); }
+  else if(txnDraft.type==='transfer' && feeAmt>0){
+    const feePayload={type:'expense',amount:feeAmt,category_id:feeCat,account_id:txnDraft.account_id,to_account_id:'',date:txnDraft.date,note:'轉帳手續費',member_id:txnDraft.member_id||''};
+    res=await apiPost('addTxnWithFee',{payload,feePayload});
+  }
   else res=await apiPost('addTxn',{payload});
 
   if(!(res.ok || res.dedup)){
@@ -985,7 +989,7 @@ async function saveTxn(edit){
   // 淨效果＝來源扣(轉帳額+手續費)、目的只收轉帳額
   if(!edit && txnDraft.type==='transfer' && feeAmt>0){
     const feePayload={type:'expense',amount:feeAmt,category_id:feeCat,account_id:txnDraft.account_id,to_account_id:'',date:txnDraft.date,note:'轉帳手續費',member_id:txnDraft.member_id||''};
-    const feeRes=await apiPost('addTxn',{payload:feePayload});
+    const feeRes={ok:true,id:res.fee_id};
     if(feeRes.ok || feeRes.dedup){
       const ft=Object.assign({}, feePayload, { txn_id: (feeRes.id||('txn_'+Date.now()+'_fee')), created_at: nowLocalStr() });
       DB.transactions.push(ft);
