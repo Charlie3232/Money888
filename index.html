@@ -75,6 +75,17 @@ body{font-family:'GenSenRound','Outfit',sans-serif;background:var(--bg2);color:v
 .hero .sub .loan{background:rgba(255,255,255,.1);color:#d9c4bd}
 .trend{height:64px;margin-top:14px;position:relative}
 .trend svg{width:100%;height:100%}
+.netgoal{margin-top:16px;border-top:1px solid var(--inkline);padding-top:14px}
+.netgoal .nghead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.netgoal .nglabel{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(234,243,240,.72)}
+.netgoal .ngamt{font-family:'Outfit';font-size:24px;font-weight:800;white-space:nowrap}
+.netgoal .ngbar{height:9px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:10px}
+.netgoal .ngfill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--coral3),var(--green));width:0}
+.netgoal .ngmeta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.netgoal .ngmeta div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 9px;min-width:0}
+.netgoal .ngmeta small{display:block;color:rgba(234,243,240,.62);font-size:10px;font-weight:700;margin-bottom:3px}
+.netgoal .ngmeta b{display:block;font-family:'Outfit';font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.netgoal .ngnote{font-size:12px;font-weight:700;color:rgba(234,243,240,.76);margin-top:9px}
 
 /* 5 格 */
 .grid5{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -554,6 +565,45 @@ function dayTotals(d){
 }
 function catMap(){ const m={}; DB.categories.forEach(c=>m[c.category_id]=c); return m; }
 function accMap(){ const m={}; DB.accounts.forEach(a=>m[a.account_id]=a); return m; }
+function settingVal(key, def){
+  const row=(DB.settings||[]).find(s=>String(s.key)===String(key));
+  const v=row ? row.value : def;
+  return (v==='' || v==null) ? def : v;
+}
+function monthlyNetGoal(){
+  const v=Number(settingVal('monthly_net_goal',35000));
+  return v>0 ? v : 35000;
+}
+function upsertSettingLocal(key,value){
+  if(!DB.settings) DB.settings=[];
+  const row=DB.settings.find(s=>String(s.key)===String(key));
+  if(row) row.value=value;
+  else DB.settings.push({key,value});
+}
+function renderNetGoal(mt){
+  const goal=monthlyNetGoal();
+  const net=Number(mt.net)||0;
+  const pct=goal>0 ? Math.max(0,Math.min(100,net/goal*100)) : 0;
+  const now=new Date();
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const daysLeft=Math.max(0,daysInMonth-now.getDate());
+  const gap=Math.max(0,goal-net);
+  const perDay=daysLeft>0 ? Math.ceil(gap/daysLeft) : gap;
+  const note=net>=goal ? '本月已達標' : (net<0 ? '本月目前還在流出' : '目前未達標，接下來要收一下');
+  return `<div class="netgoal">
+    <div class="nghead">
+      <div><div class="nglabel">本月淨額進度</div><div class="ngamt ${net>=0?'green':'red'}">${fmtSign(net)}</div></div>
+      <div class="ngamt">${pct.toFixed(0)}%</div>
+    </div>
+    <div class="ngbar"><div class="ngfill" style="width:${pct}%"></div></div>
+    <div class="ngmeta">
+      <div><small>目標</small><b>${fmt(goal)}</b></div>
+      <div><small>差額</small><b>${fmt(gap)}</b></div>
+      <div><small>每日需淨額</small><b>${fmt(perDay)}</b></div>
+    </div>
+    <div class="ngnote">${note}</div>
+  </div>`;
+}
 
 // ---------- 本地更新：不重抓全部，直接改本地 DB ----------
 // 調整某帳戶本地餘額（與後端 adjustBalance_ 一致）
@@ -579,14 +629,6 @@ function renderHome(){
   const ym=todayStr().slice(0,7);
   const mt=monthTotals(ym);
   const snaps=DB.snapshots.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  // 趨勢 sparkline
-  let spark='';
-  if(snaps.length>1){
-    const vals=snaps.map(s=>Number(s.total_assets)||0);
-    const min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
-    const pts=vals.map((v,i)=>{ const x=i/(vals.length-1)*100; const y=58-((v-min)/rng*52); return x.toFixed(1)+','+y.toFixed(1); }).join(' ');
-    spark=`<svg viewBox="0 0 100 64" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="#a6ccc0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  } else spark='<div style="color:#7a6258;font-size:11px;text-align:center;padding-top:22px">資料累積中，明天起顯示趨勢</div>';
 
   // 月增減%：用「本月最早一筆快照」對比「目前即時總資產」
   let chgNum=null;
@@ -617,7 +659,7 @@ function renderHome(){
       <div class="label">淨資產 Net Worth</div>
       <div class="big">$${fmt(t.assets)}</div>
       <div class="sub"><span class="up">${chgArrow} ${chgTxt} 本月</span></div>
-      <div class="trend">${spark}</div>
+      ${renderNetGoal(mt)}
     </div>
     <div class="card"><h3>資產總覽</h3>
       <div class="grid5">
@@ -1356,12 +1398,36 @@ function openSettings(){
     <div class="mscroll">
       <div class="setrow" onclick="openCategories()"><span class="e">🏷️</span>分類管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openLoans()"><span class="e">💳</span>貸款管理<span class="ar">›</span></div>
+      <div class="setrow" onclick="openMonthlyGoal()"><span class="e">🎯</span>本月淨額目標<span class="ar">${fmt(monthlyNetGoal())} ›</span></div>
       <div class="setrow" onclick="toast('帳戶請到存款頁右上新增')"><span class="e">🏦</span>帳戶管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openRecurrings()"><span class="e">🔁</span>週期支出 / 轉帳<span class="ar">›</span></div>
       <div class="setrow" onclick="openMembers()"><span class="e">👥</span>成員管理<span class="ar">›</span></div>
       <div class="setrow" onclick="openTutorial()"><span class="e">📖</span>使用教學<span class="ar">›</span></div>
       <div class="setrow" onclick="toast('我的資產 '+APP_VERSION)"><span class="e">ℹ️</span>關於<span class="ar">›</span></div>
     </div>`);
+}
+function openMonthlyGoal(){
+  const goal=monthlyNetGoal();
+  const m=openModal(`
+    <div class="mtop"><button class="x" onclick="closeModal(this.closest('.modal'))">✕</button><div class="t">本月淨額目標</div><button class="save" onclick="saveMonthlyGoal()">儲存</button></div>
+    <div class="mscroll">
+      <div class="field"><label>每月至少想存下</label><input class="inp" id="monthlyGoalInput" type="number" inputmode="numeric" min="1" step="1000" value="${goal}"></div>
+      <div class="note">首頁會用本月收入減本月支出計算進度，轉帳不會算進收入或支出。</div>
+    </div>`);
+}
+async function saveMonthlyGoal(){
+  const v=Math.round(Number(document.getElementById('monthlyGoalInput').value)||0);
+  if(v<=0){ toast('請輸入目標金額'); return; }
+  showSaving('儲存目標中…');
+  const res=await apiPost('setSetting',{key:'monthly_net_goal',value:v});
+  hideSaving();
+  if(res.ok || res.dedup){
+    upsertSettingLocal('monthly_net_goal',v);
+    writeCache(DB);
+    renderAll();
+    closeAllModal();
+    toast('已儲存');
+  } else toast(res.error||'儲存失敗');
 }
 
 // 分類管理
